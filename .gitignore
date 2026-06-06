@@ -1,0 +1,62 @@
+# ===========================
+# OS & Editor
+# ===========================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.iml
+
+# ===========================
+# Env & Secrets
+# ===========================
+.env
+.env.*
+!.env.example
+
+# ===========================
+# Node / Next.js  (seatcraft)
+# ===========================
+node_modules/
+.next/
+out/
+build/
+coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+*.tsbuildinfo
+.vercel
+
+# ===========================
+# Rust / Cargo  (sim_engine)
+# ===========================
+target/
+**/*.rs.bk
+Cargo.lock
+# Uncomment the line above if sim_engine is a library;
+# keep it committed if it contains binaries (which it does).
+# We'll keep it tracked — remove the line below to ignore it.
+!sim_engine/Cargo.lock
+
+# ===========================
+# Large data files
+# ===========================
+*.csv
+
+# ===========================
+# AI / Agent meta
+# ===========================
+.gemini/
+CLAUDE.md
+
+# ===========================
+# Misc
+# ===========================
+*.pem
+*.log
+tmp/

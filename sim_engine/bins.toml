@@ -1,0 +1,7 @@
+[[bin]]
+name = "ingest"
+path = "src/bin/ingest.rs"
+
+[[bin]]
+name = "server"
+path = "src/bin/server.rs"
