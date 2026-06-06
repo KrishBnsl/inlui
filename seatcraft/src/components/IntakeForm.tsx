@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronRight,
   Loader2,
-  Cpu,
+  Calculator,
   ToggleLeft,
   ToggleRight,
   Info,
@@ -97,21 +97,21 @@ export default function IntakeForm({ onSubmit, isLoading }: IntakeFormProps) {
   };
 
   const inputClass = (hasError: boolean) =>
-    `w-full bg-zinc-900 border rounded-xl px-4 py-3 text-white text-base
-     placeholder:text-zinc-600 transition-all duration-200 outline-none
-     focus:ring-2 focus:ring-indigo-500/60 focus:border-indigo-500
+    `w-full bg-neutral-950 border rounded-md px-3.5 py-3 text-white text-base
+     placeholder:text-neutral-600 transition-colors duration-150 outline-none
+     focus:ring-2 focus:ring-cyan-500/25 focus:border-cyan-500
      ${hasError
        ? "border-red-500/60 ring-2 ring-red-500/20"
-       : "border-zinc-800 hover:border-zinc-700"
+       : "border-neutral-800 hover:border-neutral-700"
      }`;
 
   const selectClass = (hasError: boolean) =>
-    `w-full bg-zinc-900 border rounded-xl px-4 py-3 text-white text-base
-     transition-all duration-200 outline-none cursor-pointer
-     focus:ring-2 focus:ring-indigo-500/60 focus:border-indigo-500
+    `w-full bg-neutral-950 border rounded-md px-3.5 py-3 text-white text-base
+     transition-colors duration-150 outline-none cursor-pointer
+     focus:ring-2 focus:ring-cyan-500/25 focus:border-cyan-500
      ${hasError
        ? "border-red-500/60 ring-2 ring-red-500/20"
-       : "border-zinc-800 hover:border-zinc-700"
+       : "border-neutral-800 hover:border-neutral-700"
      }`;
 
   return (
@@ -119,18 +119,18 @@ export default function IntakeForm({ onSubmit, isLoading }: IntakeFormProps) {
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
-      className="w-full max-w-2xl mx-auto"
+      className="w-full max-w-2xl mx-auto border border-neutral-800 bg-neutral-900/35 rounded-lg p-4 sm:p-6"
     >
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-5">
 
         {/* Rank inputs */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* JEE Main */}
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-zinc-300">
+            <label className="block text-sm font-medium text-neutral-300">
               JEE Main Rank <span className="text-red-400">*</span>
             </label>
-            <p className="text-xs text-zinc-500">For NITs, IIITs, GFTIs</p>
+            <p className="text-xs text-neutral-500">For NITs, IIITs, GFTIs</p>
             <input
               type="number"
               value={mainRank}
@@ -152,11 +152,11 @@ export default function IntakeForm({ onSubmit, isLoading }: IntakeFormProps) {
 
           {/* JEE Advanced */}
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-zinc-300">
+            <label className="block text-sm font-medium text-neutral-300">
               JEE Advanced Rank{" "}
-              <span className="text-xs text-zinc-500 font-normal">optional</span>
+              <span className="text-xs text-neutral-500 font-normal">optional</span>
             </label>
-            <p className="text-xs text-zinc-500">Required for IIT predictions</p>
+            <p className="text-xs text-neutral-500">Required for IIT predictions</p>
             <input
               type="number"
               value={advancedRank}
@@ -174,7 +174,7 @@ export default function IntakeForm({ onSubmit, isLoading }: IntakeFormProps) {
               <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
                 className="text-xs text-red-400 ml-0.5">{advancedRankError}</motion.p>
             ) : (
-              <p className="text-xs text-zinc-600 ml-0.5 flex items-center gap-1">
+              <p className="text-xs text-neutral-600 ml-0.5 flex items-center gap-1">
                 <Info size={11} />Leave blank to skip IIT options
               </p>
             )}
@@ -183,13 +183,12 @@ export default function IntakeForm({ onSubmit, isLoading }: IntakeFormProps) {
 
         {/* Home State — full width */}
         <div className="space-y-1.5">
-          <label className="block text-sm font-medium text-zinc-300 flex items-center gap-1.5">
-            <MapPin size={13} className="text-zinc-500" />
+          <label className="block text-sm font-medium text-neutral-300 flex items-center gap-1.5">
+            <MapPin size={13} className="text-neutral-500" />
             Home State <span className="text-red-400">*</span>
           </label>
-          <p className="text-xs text-zinc-500">
-            The engine automatically applies Home State (HS) quota when you match an
-            institute&apos;s state, and All India (AI) quota otherwise.
+          <p className="text-xs text-neutral-500">
+            Used to apply HS quota where applicable; other institutes use AI quota.
           </p>
           <select
             value={homeState}
@@ -200,11 +199,11 @@ export default function IntakeForm({ onSubmit, isLoading }: IntakeFormProps) {
             onBlur={() => validateHomeState(homeState)}
             className={selectClass(!!homeStateError)}
           >
-            <option value="" className="bg-zinc-900 text-zinc-500">
-              — Select your home state —
+            <option value="" className="bg-neutral-900 text-neutral-500">
+              Select your home state
             </option>
             {INDIAN_STATES.map((s) => (
-              <option key={s} value={s} className="bg-zinc-900 text-white">
+              <option key={s} value={s} className="bg-neutral-900 text-white">
                 {s}
               </option>
             ))}
@@ -219,10 +218,9 @@ export default function IntakeForm({ onSubmit, isLoading }: IntakeFormProps) {
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
-              className="mt-2 px-3 py-2 rounded-lg bg-emerald-500/8 border border-emerald-500/20
+              className="mt-2 px-3 py-2 rounded-md bg-emerald-500/8 border border-emerald-500/20
                 text-xs text-emerald-400 flex items-start gap-2"
             >
-              <span className="mt-0.5">✦</span>
               <span>
                 NIT/IIIT/GFTI institutes in{" "}
                 <strong className="text-emerald-300">{homeState}</strong> will be
@@ -235,30 +233,30 @@ export default function IntakeForm({ onSubmit, isLoading }: IntakeFormProps) {
         {/* Category + Gender */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-zinc-300">Seat Category</label>
+            <label className="block text-sm font-medium text-neutral-300">Seat Category</label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value as Category)}
               className={selectClass(false)}
             >
               {CATEGORIES.map((c) => (
-                <option key={c} value={c} className="bg-zinc-900">{c}</option>
+                <option key={c} value={c} className="bg-neutral-900">{c}</option>
               ))}
             </select>
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-zinc-300">Gender</label>
+            <label className="block text-sm font-medium text-neutral-300">Gender</label>
             <div className="grid grid-cols-1 gap-2">
               {GENDERS.map((g) => (
                 <button
                   key={g.value}
                   type="button"
                   onClick={() => setGender(g.value)}
-                  className={`px-4 py-2.5 rounded-xl border text-sm font-medium transition-all duration-200 text-left
+                  className={`px-3.5 py-2.5 rounded-md border text-sm font-medium transition-colors duration-150 text-left
                     ${gender === g.value
-                      ? "border-indigo-500 bg-indigo-500/10 text-indigo-300 ring-2 ring-indigo-500/30"
-                      : "border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-zinc-300"
+                      ? "border-cyan-500 bg-cyan-500/10 text-cyan-300"
+                      : "border-neutral-800 text-neutral-400 hover:border-neutral-600 hover:text-neutral-300"
                     }`}
                 >
                   {g.label}
@@ -269,16 +267,16 @@ export default function IntakeForm({ onSubmit, isLoading }: IntakeFormProps) {
         </div>
 
         {/* PwD Toggle */}
-        <div className="flex items-center justify-between p-4 bg-zinc-900 border border-zinc-800 rounded-xl">
+        <div className="flex items-center justify-between p-4 bg-neutral-950 border border-neutral-800 rounded-md">
           <div>
-            <p className="text-sm font-medium text-zinc-200">PwD Status</p>
-            <p className="text-xs text-zinc-500 mt-0.5">Person with Disability horizontal reservation</p>
+            <p className="text-sm font-medium text-neutral-200">PwD Status</p>
+            <p className="text-xs text-neutral-500 mt-0.5">Person with Disability horizontal reservation</p>
           </div>
           <button type="button" onClick={() => setIsPwd((v) => !v)}
-            className="transition-transform hover:scale-105 active:scale-95">
+            className="transition-colors">
             {isPwd
-              ? <ToggleRight size={36} className="text-indigo-400" />
-              : <ToggleLeft size={36} className="text-zinc-600" />}
+              ? <ToggleRight size={36} className="text-cyan-400" />
+              : <ToggleLeft size={36} className="text-neutral-600" />}
           </button>
         </div>
 
@@ -286,11 +284,11 @@ export default function IntakeForm({ onSubmit, isLoading }: IntakeFormProps) {
         <button
           type="submit"
           disabled={isLoading}
-          className={`w-full flex items-center justify-center gap-3 py-4 px-6 rounded-xl
-            font-semibold text-base transition-all duration-300 group
+          className={`w-full flex items-center justify-center gap-3 py-3.5 px-6 rounded-md
+            font-semibold text-base transition-colors duration-150 group
             ${isLoading
-              ? "bg-indigo-600/40 text-indigo-300 cursor-not-allowed"
-              : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 active:scale-[0.98]"
+              ? "bg-cyan-600/40 text-cyan-300 cursor-not-allowed"
+              : "bg-cyan-600 hover:bg-cyan-500 text-white"
             }`}
         >
           <AnimatePresence mode="wait">
@@ -303,8 +301,8 @@ export default function IntakeForm({ onSubmit, isLoading }: IntakeFormProps) {
             ) : (
               <motion.div key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 className="flex items-center gap-2">
-                <Cpu size={18} />
-                <span>Run Simulation</span>
+                <Calculator size={18} />
+                <span>Calculate options</span>
                 <ChevronRight size={18} className="transition-transform group-hover:translate-x-0.5" />
               </motion.div>
             )}

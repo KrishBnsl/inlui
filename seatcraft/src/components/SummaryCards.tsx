@@ -1,7 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Shield, TrendingUp, LayoutGrid } from "lucide-react";
+import { motion, type Variants } from "framer-motion";
+import { CheckCircle2, ListChecks, TrendingUp } from "lucide-react";
 
 interface SummaryCardsProps {
   total_options: number;
@@ -9,7 +9,7 @@ interface SummaryCardsProps {
   top_upgrade: string;
 }
 
-const cardVariants = {
+const cardVariants: Variants = {
   hidden: { opacity: 0, y: 16 },
   visible: (i: number) => ({
     opacity: 1,
@@ -25,25 +25,25 @@ export default function SummaryCards({
 }: SummaryCardsProps) {
   const cards = [
     {
-      icon: <LayoutGrid size={20} className="text-indigo-400" />,
-      label: "Total Eligible Options",
+      icon: <ListChecks size={18} className="text-neutral-400" />,
+      label: "Eligible options",
       value: total_options.toString(),
-      sub: "Matching your profile across all JoSAA institutes",
-      accent: "border-indigo-500/30 bg-indigo-500/5",
+      sub: "After category, state, and gender filters",
+      accent: "border-neutral-800 bg-neutral-900/30",
     },
     {
-      icon: <Shield size={20} className="text-emerald-400" />,
-      label: "Safest Top Choice",
+      icon: <CheckCircle2 size={18} className="text-emerald-400" />,
+      label: "Safest choice",
       value: safest_choice,
-      sub: "Highest allotment probability in your matrix",
-      accent: "border-emerald-500/30 bg-emerald-500/5",
+      sub: "Highest probability in the current result set",
+      accent: "border-neutral-800 bg-neutral-900/30",
     },
     {
-      icon: <TrendingUp size={20} className="text-amber-400" />,
-      label: "Highest Upgradable Option",
+      icon: <TrendingUp size={18} className="text-amber-400" />,
+      label: "Best reach option",
       value: top_upgrade,
-      sub: "Best reach college within striking distance",
-      accent: "border-amber-500/30 bg-amber-500/5",
+      sub: "Ambitious option still worth tracking",
+      accent: "border-neutral-800 bg-neutral-900/30",
     },
   ];
 
@@ -56,18 +56,18 @@ export default function SummaryCards({
           initial="hidden"
           animate="visible"
           variants={cardVariants}
-          className={`rounded-2xl border p-5 ${card.accent}`}
+          className={`rounded-md border p-4 ${card.accent}`}
         >
           <div className="flex items-center gap-2.5 mb-3">
-            <div className="p-2 rounded-lg bg-zinc-900/60">{card.icon}</div>
-            <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+            <div className="p-1.5 rounded-md bg-neutral-950 border border-neutral-800">{card.icon}</div>
+            <span className="text-xs font-medium text-neutral-400 uppercase">
               {card.label}
             </span>
           </div>
           <p className="text-xl font-semibold text-white leading-tight truncate">
             {card.value}
           </p>
-          <p className="text-xs text-zinc-500 mt-1.5">{card.sub}</p>
+          <p className="text-xs text-neutral-500 mt-1.5">{card.sub}</p>
         </motion.div>
       ))}
     </div>
