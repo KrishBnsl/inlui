@@ -77,16 +77,75 @@ pub fn yearly_ranks_to_percentiles(
         .collect()
 }
 
-/// Fit volatility model in percentile space (reduces cross-year inflation noise).
+/// Fit volatility model in percentile space (reduces cross-year inflation noise),
+/// applying an exponentially weighted moving average to prioritize recent years.
 pub fn fit_percentile_distribution(
     yearly_cutoffs: &[(u16, u32)],
     cohorts: &CohortRegistry,
 ) -> Result<CutoffDistribution, DistributionError> {
-    let percentiles = yearly_ranks_to_percentiles(yearly_cutoffs, cohorts)?;
-    fit_cutoff_distribution_f64(&percentiles)
+    let mut year_percentiles = Vec::with_capacity(yearly_cutoffs.len());
+    for &(year, rank) in yearly_cutoffs {
+        let pct = cohorts.rank_to_percentile(year, rank)?;
+        year_percentiles.push((year, pct));
+    }
+    fit_cutoff_distribution_weighted(&year_percentiles)
 }
 
 /// Same success rule as rank space: user wins when `user <= cutoff`.
+/// Uses an exponentially weighted moving average (decay factor = 0.6) to give priority to recent years.
+pub fn fit_cutoff_distribution_weighted(values: &[(u16, f64)]) -> Result<CutoffDistribution, DistributionError> {
+    if values.is_empty() {
+        return Err(DistributionError::NotEnoughHistory);
+    }
+
+    let max_year = values.iter().map(|(y, _)| *y).max().unwrap_or(2025);
+    let decay_factor = 0.6_f64; // Gives 60% weight to year N, 36% to N-1, etc.
+
+    let mut weighted_sum = 0.0;
+    let mut v1 = 0.0;
+    let mut v2 = 0.0;
+
+    let mut weights = Vec::with_capacity(values.len());
+
+    for (year, val) in values {
+        // diff is how many years old the data is
+        let diff = max_year.saturating_sub(*year);
+        let weight = f64::powf(decay_factor, diff as f64);
+        weights.push(weight);
+
+        weighted_sum += val * weight;
+        v1 += weight;
+        v2 += weight * weight;
+    }
+
+    let mean = weighted_sum / v1;
+
+    let std_dev = if values.len() < 2 {
+        0.0
+    } else {
+        let mut var_sum = 0.0;
+        for (i, w) in weights.iter().enumerate() {
+            let diff = values[i].1 - mean;
+            var_sum += w * diff * diff;
+        }
+
+        // Reliability-weighted unbiased variance (Bessel's correction equivalent)
+        let variance = if (v1 * v1 - v2) > 0.0 {
+            (v1 / (v1 * v1 - v2)) * var_sum
+        } else {
+            0.0
+        };
+        variance.sqrt()
+    };
+
+    if values.len() >= 2 && std_dev <= 0.0 {
+        return Err(DistributionError::InvalidStdDev);
+    }
+
+    Ok(CutoffDistribution { mean, std_dev })
+}
+
+/// Unweighted version for simulated percentile outcomes.
 pub fn fit_cutoff_distribution_f64(values: &[f64]) -> Result<CutoffDistribution, DistributionError> {
     if values.is_empty() {
         return Err(DistributionError::NotEnoughHistory);
