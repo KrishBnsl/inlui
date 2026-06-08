@@ -268,30 +268,6 @@ const SEAT_NODES: SeatNode[] = [
   },
 
   // ── GFTIs (JEE Main, HS only for state-specific ones) ────────────────────
-  // DTU — Delhi (Delhi-domicile HS quota exists but is very limited)
-  {
-    institute_name: "Delhi Technological University",
-    institute_type: "GFTI",
-    rank_type: "main",
-    institute_state: "Delhi",
-    program_name: "Computer Science and Engineering",
-    ai_closing: [4820, 5030, 4660, 4890],
-    ai_opening: [2350, 2460, 2280, 2390],
-    hs_closing: [3640, 3810, 3530, 3720],
-    hs_opening: [1780, 1870, 1730, 1820],
-  },
-  // NSUT — Delhi
-  {
-    institute_name: "Netaji Subhas University of Technology",
-    institute_type: "GFTI",
-    rank_type: "main",
-    institute_state: "Delhi",
-    program_name: "Computer Science and Engineering",
-    ai_closing: [6320, 6580, 6110, 6400],
-    ai_opening: [3090, 3220, 2990, 3140],
-    hs_closing: [4920, 5140, 4760, 4990],
-    hs_opening: [2400, 2510, 2330, 2440],
-  },
 
   // ── More NITs — mid-tier cutoffs (15k–40k AI) ─────────────────────────────
   {
@@ -527,6 +503,18 @@ export async function runSimulationMock(
 ): Promise<SimulationResponse> {
   await new Promise((r) => setTimeout(r, 2200));
 
+  // Determine multiplier for Category and Gender to convert General CRL cutoffs to Category Ranks
+  let multiplier = 1.0;
+  const cat = input.category.toUpperCase();
+  if (cat.includes("OBC")) multiplier = 0.28;
+  else if (cat.includes("SC")) multiplier = 0.12;
+  else if (cat.includes("ST")) multiplier = 0.06;
+  else if (cat.includes("EWS")) multiplier = 0.16;
+
+  if (input.gender.toLowerCase().includes("female")) {
+    multiplier *= 1.35; // Female cutoff ranks are typically ~35% more relaxed (larger number)
+  }
+
   // Only include IIT nodes if student has an Advanced rank
   const eligibleNodes = SEAT_NODES.filter(
     (node) => node.rank_type === "main" || input.advanced_rank !== undefined
@@ -538,7 +526,11 @@ export async function runSimulationMock(
         ? (input.advanced_rank ?? Infinity)
         : input.main_rank;
 
-    const { quota, closing, opening } = resolveQuota(input.home_state, node);
+    const { quota, closing: rawClosing, opening: rawOpening } = resolveQuota(input.home_state, node);
+
+    // Apply the category/gender scaling multiplier to the raw General CRL cutoffs
+    const closing = rawClosing.map(v => Math.max(1, Math.round(v * multiplier))) as [number, number, number, number];
+    const opening = rawOpening.map(v => Math.max(1, Math.round(v * multiplier))) as [number, number, number, number];
 
     const prob = computeProbability(userRank, closing);
     const meanClosing = closing.reduce((s, v) => s + v, 0) / closing.length;
