@@ -50,19 +50,29 @@ impl PredictorEngine {
         cold_start: HashMap<QuotaAssetKey, ColdStartProxy>,
     ) -> Result<Self, sqlx::Error> {
         let rows = crate::predictor::db::fetch_cutoffs_for_simulation(pool).await?;
-        let matrix = QuotaMatrix::from_db_rows(rows);
+        Ok(Self::from_rows(rows, target_year, target_year_total, cohorts, cold_start))
+    }
 
-        Ok(Self {
+    /// Build an engine from pre-fetched DB rows (avoids a second round-trip when two engines share the same data).
+    pub fn from_rows(
+        rows: Vec<crate::predictor::db::HistoricalCutoff>,
+        target_year: u16,
+        target_year_total: u32,
+        cohorts: CohortRegistry,
+        cold_start: HashMap<QuotaAssetKey, ColdStartProxy>,
+    ) -> Self {
+        let matrix = QuotaMatrix::from_db_rows(rows);
+        Self {
             matrix,
             config: PredictorEngineConfig {
                 cohorts,
                 target_year,
                 target_year_total,
-                iterations: 10_000, // Enforcing 10k parallel iterations
+                iterations: 10_000,
                 seat_adjustment: SeatCapacityAdjustment::default(),
             },
             cold_start,
-        })
+        }
     }
 
     pub fn predict_for_user(
@@ -80,10 +90,24 @@ impl PredictorEngine {
             self.config.target_year_total,
         );
 
-        routed
+        let predictions: Vec<QuotaAssetPrediction> = routed
             .iter()
-            .map(|asset| self.predict_asset(asset, user_percentile))
-            .collect()
+            .filter_map(|asset| {
+                match self.predict_asset(asset, user_percentile) {
+                    Ok(p) => Some(p),
+                    Err(e) => {
+                        tracing::debug!("Failed to predict asset {:?}: {:?}", asset.key, e);
+                        None
+                    }
+                }
+            })
+            .collect();
+
+        if predictions.is_empty() {
+            Err(DistributionError::NoEligibleAssets)
+        } else {
+            Ok(predictions)
+        }
     }
 
     fn predict_asset(

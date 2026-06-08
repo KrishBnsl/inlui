@@ -17,9 +17,9 @@ struct CsvRow {
     #[serde(rename = "Gender")]
     gender: String,
     #[serde(rename = "Opening Rank")]
-    opening_rank: f64, // float because sometimes CSV has .0
+    opening_rank: Option<f64>, // Some rows have empty rank (supernumerary / preparatory seats)
     #[serde(rename = "Closing Rank")]
-    closing_rank: f64,
+    closing_rank: Option<f64>,
     #[serde(rename = "Round")]
     round: i32,
     #[serde(rename = "Year")]
@@ -52,6 +52,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     for result in rdr.deserialize() {
         let record: CsvRow = result?;
+
+        // Skip rows with no rank data (supernumerary / preparatory seats)
+        let (Some(opening_rank), Some(closing_rank)) = (record.opening_rank, record.closing_rank) else {
+            continue;
+        };
 
         // 1. Get or create Institute
         let inst_id = if let Some(id) = inst_cache.get(&record.institute) {
@@ -129,6 +134,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
             "General" // fallback
         };
 
+        // Normalise gender: CSV contains verbose values like
+        // "Female-only (including Supernumerary)" — collapse to two canonical values.
+        let gender = if record.gender.to_lowercase().contains("female") {
+            "Female-only"
+        } else {
+            "Gender-Neutral"
+        };
+
+        // Normalise quota: CSV uses "AI", "HS", "OS", "AP", "JK", "LA" etc.
+        let quota_norm = match record.quota.as_str() {
+            "HS" => "HS",
+            _    => "AI",   // AI / OS / AP / JK / LA all treated as All-India
+        };
+
         // Insert into josaa_cutoffs
         sqlx::query(
             r#"
@@ -142,13 +161,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .bind(prog_id)
         .bind(record.year)
         .bind(record.round)
-        .bind(&record.quota)
+        .bind(quota_norm)
         .bind(category)
-        .bind(&record.gender)
+        .bind(gender)
         .bind(is_pwd)
         .bind(is_defence)
-        .bind(record.opening_rank as i32)
-        .bind(record.closing_rank as i32)
+        .bind(opening_rank as i32)
+        .bind(closing_rank as i32)
         .execute(&pool)
         .await?;
 
@@ -164,14 +183,19 @@ async fn main() -> Result<(), Box<dyn Error>> {
 }
 
 async fn setup_database(pool: &PgPool) -> Result<(), Box<dyn Error>> {
+    // Drop and recreate so re-runs are always clean
+    sqlx::query("DROP TABLE IF EXISTS josaa_cutoffs CASCADE").execute(pool).await?;
+    sqlx::query("DROP TABLE IF EXISTS programs CASCADE").execute(pool).await?;
+    sqlx::query("DROP TABLE IF EXISTS institutes CASCADE").execute(pool).await?;
+
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS institutes (
+        CREATE TABLE institutes (
             id SERIAL PRIMARY KEY,
-            code INT UNIQUE NOT NULL, 
-            name VARCHAR(255) NOT NULL,
+            code INT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
             type VARCHAR(10) NOT NULL,
-            state VARCHAR(50) NOT NULL
+            state TEXT NOT NULL
         );
         "#,
     )
@@ -180,10 +204,10 @@ async fn setup_database(pool: &PgPool) -> Result<(), Box<dyn Error>> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS programs (
+        CREATE TABLE programs (
             id SERIAL PRIMARY KEY,
-            code VARCHAR(10) UNIQUE NOT NULL, 
-            name VARCHAR(255) NOT NULL
+            code VARCHAR(12) UNIQUE NOT NULL,
+            name TEXT NOT NULL
         );
         "#,
     )
@@ -192,16 +216,16 @@ async fn setup_database(pool: &PgPool) -> Result<(), Box<dyn Error>> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS josaa_cutoffs (
+        CREATE TABLE josaa_cutoffs (
             id BIGSERIAL PRIMARY KEY,
             institute_id INT REFERENCES institutes(id),
             program_id INT REFERENCES programs(id),
-            year INT NOT NULL, 
-            round INT NOT NULL, 
-            quota VARCHAR(5) NOT NULL, 
-            category VARCHAR(15) NOT NULL, 
+            year INT NOT NULL,
+            round INT NOT NULL,
+            quota VARCHAR(10) NOT NULL,
+            category VARCHAR(20) NOT NULL,
             gender VARCHAR(20) NOT NULL,
-            is_pwd BOOLEAN DEFAULT FALSE, 
+            is_pwd BOOLEAN DEFAULT FALSE,
             is_defence BOOLEAN DEFAULT FALSE,
             opening_rank INT NOT NULL,
             closing_rank INT NOT NULL
@@ -213,7 +237,7 @@ async fn setup_database(pool: &PgPool) -> Result<(), Box<dyn Error>> {
 
     sqlx::query(
         r#"
-        CREATE INDEX IF NOT EXISTS idx_simulation_lookup 
+        CREATE INDEX idx_simulation_lookup
         ON josaa_cutoffs (institute_id, program_id, quota, category, gender, is_pwd, is_defence, round);
         "#,
     )

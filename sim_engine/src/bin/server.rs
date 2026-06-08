@@ -3,7 +3,7 @@
 //! POST /api/simulate  →  SimulateRequest  →  SimulateResponse
 //! GET  /api/health    →  200 OK
 
-use std::{collections::HashMap, env, sync::Arc};
+use std::{collections::{HashMap, HashSet}, env, sync::Arc};
 
 use axum::{
     extract::State,
@@ -19,11 +19,12 @@ use tower_http::cors::{Any, CorsLayer};
 use tracing::info;
 
 use sim_engine::predictor::{
-    engine::{PredictorEngine, PredictorEngineConfig},
+    db,
+    engine::PredictorEngine,
     normalization::{CohortRegistry, ExamCohort},
-    quota_matrix::{HorizontalFlags, QuotaMatrix, UserProfile},
+    quota_matrix::{HorizontalFlags, UserProfile},
 };
-use sim_engine::enumerations::enums::{category, counselling, quota, IndianState};
+use sim_engine::enumerations::enums::{category, quota, IndianState};
 
 // ─── JSON Request/Response types (mirrors the TypeScript frontend types) ──────
 
@@ -194,7 +195,7 @@ async fn simulate(
         pwd: req.is_pwd,
     };
 
-    let mut all_results: Vec<PredictionResult> = Vec::new();
+    let mut all_results: Vec<(String, PredictionResult)> = Vec::new();
 
     // ── NIT/IIIT/GFTI predictions via JEE Main rank ──────────────────────────
     {
@@ -227,8 +228,12 @@ async fn simulate(
                             })
                             .unwrap_or_default();
 
-                        all_results.push(PredictionResult {
-                            id: format!("{}-{}-{}", pred.key.institute, pred.key.branch, quota_label),
+                        // Use a stable unique key for dedup: institute + branch + quota + gender flag
+                        let gender_tag = if horizontal.female { "F" } else { "N" };
+                        let dedup_key = format!("{}-{}-{}-{}", pred.key.institute, pred.key.branch, quota_label, gender_tag);
+
+                        all_results.push((dedup_key, PredictionResult {
+                            id: String::new(), // filled after dedup
                             institute_type: institute_type_label(&pred.key.institute).to_string(),
                             institute_name: pred.key.institute.clone(),
                             program_name: pred.key.branch.clone(),
@@ -238,7 +243,7 @@ async fn simulate(
                             projected_closing_rank: pred.projected_cutoff_rank,
                             uses_cold_start_proxy: pred.uses_cold_start_proxy,
                             historical_data: historical,
-                        });
+                        }));
                     }
                 }
                 Err(e) => {
@@ -274,8 +279,11 @@ async fn simulate(
                         })
                         .unwrap_or_default();
 
-                    all_results.push(PredictionResult {
-                        id: format!("{}-{}-AI", pred.key.institute, pred.key.branch),
+                    let gender_tag = if horizontal.female { "F" } else { "N" };
+                    let dedup_key = format!("{}-{}-AI-{}", pred.key.institute, pred.key.branch, gender_tag);
+
+                    all_results.push((dedup_key, PredictionResult {
+                        id: String::new(),
                         institute_type: "IIT".to_string(),
                         institute_name: pred.key.institute.clone(),
                         program_name: pred.key.branch.clone(),
@@ -285,7 +293,7 @@ async fn simulate(
                         projected_closing_rank: pred.projected_cutoff_rank,
                         uses_cold_start_proxy: pred.uses_cold_start_proxy,
                         historical_data: historical,
-                    });
+                    }));
                 }
             }
             Err(e) => {
@@ -294,16 +302,28 @@ async fn simulate(
         }
     }
 
-    // Deduplicate (same institute+branch could appear from both quota passes if routing overlaps)
-    all_results.dedup_by(|a, b| a.id == b.id);
+    // Deduplicate using a HashSet on the stable dedup_key (handles non-consecutive duplicates)
+    let mut seen: HashSet<String> = HashSet::new();
+    let mut unique: Vec<PredictionResult> = all_results
+        .into_iter()
+        .filter_map(|(key, result)| {
+            if seen.insert(key) { Some(result) } else { None }
+        })
+        .collect();
 
     // Sort by probability descending
-    all_results.sort_by(|a, b| {
+    unique.sort_by(|a, b| {
         b.probability_percent
             .partial_cmp(&a.probability_percent)
             .unwrap_or(std::cmp::Ordering::Equal)
     });
 
+    // Assign stable sequential IDs now that order is finalised
+    let all_results: Vec<PredictionResult> = unique
+        .into_iter()
+        .enumerate()
+        .map(|(i, mut r)| { r.id = i.to_string(); r })
+        .collect();
     let total = all_results.len();
     let safest = all_results.first().map(|r| r.institute_name.clone()).unwrap_or_default();
     let upgrade_idx = (total as f64 * 0.33) as usize;
@@ -336,30 +356,39 @@ async fn main() {
         .await
         .expect("Cannot connect to database");
 
+    info!("Loading cutoff data from database (single fetch)…");
+    let all_rows: Vec<sim_engine::predictor::db::HistoricalCutoff> =
+        db::fetch_cutoffs_for_simulation(&pool)
+            .await
+            .expect("Failed to load cutoff data from database");
+
     info!("Building JoSAA engine (NITs/IIITs/GFTIs)…");
-    let engine_josaa = PredictorEngine::from_db(
-        &pool,
+    // JoSAA engine covers NITs, IIITs, GFTIs, and non-IIT institutes
+    let josaa_rows: Vec<_> = all_rows.iter()
+        .filter(|r| !r.institute_name.to_uppercase().contains("INDIAN INSTITUTE OF TECHNOLOGY"))
+        .cloned()
+        .collect();
+    let engine_josaa = PredictorEngine::from_rows(
+        josaa_rows,
         2026,
         1_250_000,
         jee_main_cohorts(),
         HashMap::new(),
-    )
-    .await
-    .expect("Failed to build JoSAA engine");
+    );
 
-    // IIT engine uses the same DB but filters to IIT rows only; in practice
-    // the routing layer will only match IIT quota assets when we pass advanced rank.
-    // We share the same pool / engine but use a separate Advanced cohort registry.
     info!("Building IIT engine (JEE Advanced)…");
-    let engine_iit = PredictorEngine::from_db(
-        &pool,
+    // IIT engine covers only IIT rows — smaller matrix, faster routing
+    let iit_rows: Vec<_> = all_rows.into_iter()
+        .filter(|r| r.institute_name.to_uppercase().contains("INDIAN INSTITUTE OF TECHNOLOGY"))
+        .collect();
+    let engine_iit = PredictorEngine::from_rows(
+        iit_rows,
         2026,
         190_000,
         jee_advanced_cohorts(),
         HashMap::new(),
-    )
-    .await
-    .expect("Failed to build IIT engine");
+    );
+
 
     let state = Arc::new(AppState { engine_josaa, engine_iit });
 

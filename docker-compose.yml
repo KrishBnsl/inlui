@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: inlui_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: inlui
+      POSTGRES_USER: inlui
+      POSTGRES_PASSWORD: inlui_secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U inlui -d inlui"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── Rust sim_engine — ingest (run once to populate the DB) ──────────────────
+  ingest:
+    build:
+      context: ./sim_engine
+      dockerfile: Dockerfile
+    container_name: inlui_ingest
+    command: ["./ingest"]
+    working_dir: /app
+    environment:
+      DATABASE_URL: postgres://inlui:inlui_secret@postgres:5432/inlui
+    volumes:
+      - ./sim_engine/merged_jee_cutoff_2018_2025.csv:/app/merged_jee_cutoff_2018_2025.csv:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - ingest          # only run via: docker compose --profile ingest up ingest
+
+  # ── Rust sim_engine — HTTP API server ──────────────────────────────────────
+  server:
+    build:
+      context: ./sim_engine
+      dockerfile: Dockerfile
+    container_name: inlui_server
+    restart: unless-stopped
+    command: ["./server"]
+    working_dir: /app
+    environment:
+      DATABASE_URL: postgres://inlui:inlui_secret@postgres:5432/inlui
+      PORT: 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

@@ -9,7 +9,7 @@ import SummaryCards from "@/components/SummaryCards";
 import ResultsTable, { TableSkeleton } from "@/components/ResultsTable";
 import VolatilityDrawer from "@/components/VolatilityDrawer";
 import type { SimulationInput, SimulationResponse, PredictionResult } from "@/lib/types";
-import { runSimulationMock } from "@/lib/api";
+import { runSimulation } from "@/lib/api";
 
 type AppState = "idle" | "loading" | "results";
 
@@ -56,8 +56,8 @@ export default function Home() {
     setError(null);
     setAppState("loading");
     try {
-      // Swap runSimulationMock → runSimulation when backend is ready
-      const data = await runSimulationMock(input);
+      // Live backend via Rust sim_engine server
+      const data = await runSimulation(input);
       setResponse(data);
       setAppState("results");
     } catch (err) {

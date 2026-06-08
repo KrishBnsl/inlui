@@ -22,10 +22,10 @@ pub struct HistoricalCutoff {
 }
 
 pub async fn fetch_cutoffs_for_simulation(pool: &PgPool) -> Result<Vec<HistoricalCutoff>, sqlx::Error> {
-    // We join with institutes and programs to get names and state needed for mapping to QuotaAssetKey
+    // No ORDER BY — results are aggregated into a HashMap in memory so DB ordering is unused overhead.
     sqlx::query_as::<_, HistoricalCutoff>(
         r#"
-        SELECT 
+        SELECT DISTINCT ON (c.institute_id, c.program_id, c.quota, c.category, c.gender, c.is_pwd, c.is_defence, c.year)
             c.institute_id,
             c.program_id,
             c.year,
@@ -43,7 +43,7 @@ pub async fn fetch_cutoffs_for_simulation(pool: &PgPool) -> Result<Vec<Historica
         FROM josaa_cutoffs c
         JOIN institutes i ON c.institute_id = i.id
         JOIN programs p ON c.program_id = p.id
-        ORDER BY c.institute_id, c.program_id, c.quota, c.category, c.gender, c.is_pwd, c.is_defence, c.year, c.round
+        ORDER BY c.institute_id, c.program_id, c.quota, c.category, c.gender, c.is_pwd, c.is_defence, c.year, c.round DESC
         "#
     )
     .fetch_all(pool)
