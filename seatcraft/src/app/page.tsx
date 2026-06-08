@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BarChart3, RotateCcw, Code2 } from "lucide-react";
+import { BarChart3, RotateCcw, Code2, MessageCircle } from "lucide-react";
 import IntakeForm from "@/components/IntakeForm";
 import ChoiceList from "@/components/ChoiceList";
 import SummaryCards from "@/components/SummaryCards";
 import ResultsTable, { TableSkeleton } from "@/components/ResultsTable";
 import VolatilityDrawer from "@/components/VolatilityDrawer";
+import ChatAdvisor from "@/components/ChatAdvisor";
 import type { SimulationInput, SimulationResponse, PredictionResult } from "@/lib/types";
 import { runSimulation } from "@/lib/api";
 
@@ -35,6 +36,7 @@ export default function Home() {
   const [savedChoiceIds, setSavedChoiceIds] = useState<string[]>(readStoredChoiceIds);
   const [choiceNote, setChoiceNote] = useState(readStoredChoiceNote);
   const [error, setError] = useState<string | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     window.localStorage.setItem("seatcraft.choiceIds", JSON.stringify(savedChoiceIds));
@@ -160,6 +162,28 @@ export default function Home() {
                     <p className="text-xs text-neutral-500">quota aware</p>
                   </div>
                 </div>
+
+                {/* Chat Advisor CTA */}
+                <motion.button
+                  id="open-chat-advisor"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 }}
+                  onClick={() => setChatOpen(true)}
+                  className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-medium
+                    bg-gradient-to-r from-cyan-600/20 to-teal-600/20
+                    border border-cyan-500/30 text-cyan-300
+                    hover:from-cyan-600/30 hover:to-teal-600/30 hover:border-cyan-500/50 hover:text-cyan-100
+                    transition-all duration-200 shadow-sm shadow-cyan-900/20 max-w-xs"
+                >
+                  <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-cyan-500 to-teal-600 flex items-center justify-center shrink-0">
+                    <MessageCircle size={12} className="text-white" />
+                  </div>
+                  <span>Ask the Counselling Advisor</span>
+                  <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/20 text-cyan-400">
+                    AI
+                  </span>
+                </motion.button>
               </div>
 
               <div className="space-y-4">
@@ -260,6 +284,9 @@ export default function Home() {
         result={selectedResult}
         onClose={() => setSelectedResult(null)}
       />
+
+      {/* Counselling Advisor Drawer */}
+      <ChatAdvisor open={chatOpen} onClose={() => setChatOpen(false)} />
     </div>
   );
 }
