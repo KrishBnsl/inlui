@@ -90,10 +90,24 @@ impl PredictorEngine {
             self.config.target_year_total,
         );
 
-        routed
+        let predictions: Vec<QuotaAssetPrediction> = routed
             .iter()
-            .map(|asset| self.predict_asset(asset, user_percentile))
-            .collect()
+            .filter_map(|asset| {
+                match self.predict_asset(asset, user_percentile) {
+                    Ok(p) => Some(p),
+                    Err(e) => {
+                        tracing::debug!("Failed to predict asset {:?}: {:?}", asset.key, e);
+                        None
+                    }
+                }
+            })
+            .collect();
+
+        if predictions.is_empty() {
+            Err(DistributionError::NoEligibleAssets)
+        } else {
+            Ok(predictions)
+        }
     }
 
     fn predict_asset(
