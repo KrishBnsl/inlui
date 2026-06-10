@@ -50,23 +50,29 @@ services:
     environment:
       DATABASE_URL: postgres://inlui:inlui_secret@postgres:5432/inlui
       PORT: 8080
-      # ── RAG (integrated — no separate process) ──────────────────────────────
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      RAG_LLM_MODEL: gpt-4o-mini
-      RAG_LLM_TEMPERATURE: "0.2"
-      RAG_EMBED_MODEL: text-embedding-3-small
-      RAG_DATA_DIR: /app/uploads
-      RAG_TOP_K: "5"
-      RAG_CHUNK_SIZE: "512"
-      RAG_CHUNK_OVERLAP: "64"
     ports:
       - "8080:8080"
-    volumes:
-      - rag_uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
 
+  # ── Python RAG service — LangChain + FastAPI ────────────────────────────────
+  rag:
+    build:
+      context: ./rag_service
+      dockerfile: Dockerfile
+    container_name: inlui_rag
+    restart: unless-stopped
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      RAG_LLM_MODEL: gpt-4o-mini
+      RAG_LLM_TEMPERATURE: "0.2"
+      RAG_EMBED_MODEL: text-embedding-3-small
+      RAG_TOP_K: "5"
+      RAG_CHUNK_SIZE: "512"
+      RAG_CHUNK_OVERLAP: "64"
+    ports:
+      - "8081:8081"
+
 volumes:
   postgres_data:
-  rag_uploads:

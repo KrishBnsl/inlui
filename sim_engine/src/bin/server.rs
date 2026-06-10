@@ -6,7 +6,7 @@
 use std::{collections::{HashMap, HashSet}, env, sync::Arc};
 
 use axum::{
-    extract::{Multipart, State},
+    extract::State,
     http::{HeaderValue, Method, StatusCode},
     response::IntoResponse,
     routing::{get, post},
@@ -25,16 +25,6 @@ use sim_engine::predictor::{
     quota_matrix::{HorizontalFlags, UserProfile},
 };
 use sim_engine::enumerations::enums::{category, quota, IndianState};
-use sim_engine::rag::{self, RagService};
-
-// ─── RAG request / response types ───────────────────────────────────────────
-
-#[derive(Debug, serde::Deserialize)]
-struct AskRequest {
-    question: String,
-    /// Optional base64-encoded image the user attaches to their question.
-    image_b64: Option<String>,
-}
 
 // ─── JSON Request/Response types (mirrors the TypeScript frontend types) ──────
 
@@ -88,7 +78,6 @@ struct ErrorResponse {
 struct AppState {
     engine_josaa: PredictorEngine,  // JoSAA engine (NITs, IIITs, GFTIs via JEE Main)
     engine_iit: PredictorEngine,    // JoSAA IIT engine (via JEE Advanced)
-    rag: Arc<RagService>,           // RAG pipeline (in-process, no second service)
 }
 
 // ─── Parse helpers ────────────────────────────────────────────────────────────
@@ -184,87 +173,6 @@ async fn health() -> impl IntoResponse {
     (StatusCode::OK, "ok")
 }
 
-// ─── RAG routes ──────────────────────────────────────────────────────────────
-
-/// POST /api/rag/upload — multipart form with a `file` field (PDF or image).
-async fn rag_upload(
-    State(state): State<Arc<AppState>>,
-    mut multipart: Multipart,
-) -> impl IntoResponse {
-    while let Ok(Some(field)) = multipart.next_field().await {
-        let field_name = field.name().unwrap_or("").to_string();
-        if field_name != "file" {
-            continue;
-        }
-
-        let filename = field
-            .file_name()
-            .unwrap_or("upload")
-            .to_string();
-
-        let bytes = match field.bytes().await {
-            Ok(b) => b,
-            Err(e) => {
-                return (
-                    StatusCode::BAD_REQUEST,
-                    Json(serde_json::json!({ "error": format!("Failed to read file: {e}") })),
-                )
-                    .into_response();
-            }
-        };
-
-        return match rag::ingestion::ingest_document(&state.rag, &filename, &bytes).await {
-            Ok(count) => (
-                StatusCode::OK,
-                Json(serde_json::json!({
-                    "ok": true,
-                    "chunks_added": count,
-                    "source": filename,
-                })),
-            )
-                .into_response(),
-            Err(e) => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({ "error": e.to_string() })),
-            )
-                .into_response(),
-        };
-    }
-
-    (
-        StatusCode::BAD_REQUEST,
-        Json(serde_json::json!({ "error": "No 'file' field found in multipart body" })),
-    )
-        .into_response()
-}
-
-/// POST /api/rag/ask — JSON body { question, image_b64? }.
-async fn rag_ask(
-    State(state): State<Arc<AppState>>,
-    Json(req): Json<AskRequest>,
-) -> impl IntoResponse {
-    match rag::retrieval::answer(&state.rag, &req.question, req.image_b64.as_deref()).await {
-        Ok(resp) => (StatusCode::OK, Json(resp)).into_response(),
-        Err(e) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({ "error": e.to_string() })),
-        )
-            .into_response(),
-    }
-}
-
-/// GET /api/rag/status — returns chunk count and indexed document names.
-async fn rag_status(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    let store = state.rag.store.read().await;
-    (
-        StatusCode::OK,
-        Json(serde_json::json!({
-            "chunk_count": store.chunk_count(),
-            "documents": store.documents(),
-        })),
-    )
-        .into_response()
-}
 
 
 async fn simulate(
@@ -485,16 +393,7 @@ async fn main() {
     );
 
 
-    info!("Initialising RAG service…");
-    let rag_config = sim_engine::rag::config::RagConfig::from_env();
-    if rag_config.api_key.is_empty() {
-        tracing::warn!(
-            "OPENAI_API_KEY is not set — RAG endpoints will return errors until it is configured."
-        );
-    }
-    let rag = Arc::new(RagService::new(rag_config));
-
-    let state = Arc::new(AppState { engine_josaa, engine_iit, rag });
+    let state = Arc::new(AppState { engine_josaa, engine_iit });
 
     let cors = CorsLayer::new()
         .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())
@@ -504,9 +403,6 @@ async fn main() {
     let app = Router::new()
         .route("/api/health", get(health))
         .route("/api/simulate", post(simulate))
-        .route("/api/rag/upload", post(rag_upload))
-        .route("/api/rag/ask",    post(rag_ask))
-        .route("/api/rag/status", get(rag_status))
         .layer(cors)
         .with_state(state);
 

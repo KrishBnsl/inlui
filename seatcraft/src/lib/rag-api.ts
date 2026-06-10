@@ -1,6 +1,6 @@
-// RAG API client — talks to the three /api/rag/* endpoints on the Rust backend.
+// RAG API client — talks to the Python LangChain RAG service on port 8081.
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const RAG_BASE = process.env.NEXT_PUBLIC_RAG_URL ?? "http://localhost:8081";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -31,7 +31,7 @@ export interface UploadResponse {
 export async function uploadDocument(file: File): Promise<UploadResponse> {
   const form = new FormData();
   form.append("file", file);
-  const res = await fetch(`${API_BASE}/api/rag/upload`, {
+  const res = await fetch(`${RAG_BASE}/api/rag/upload`, {
     method: "POST",
     body: form,
   });
@@ -50,7 +50,7 @@ export async function askQuestion(
   question: string,
   imageB64?: string
 ): Promise<AskResponse> {
-  const res = await fetch(`${API_BASE}/api/rag/ask`, {
+  const res = await fetch(`${RAG_BASE}/api/rag/ask`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -67,7 +67,7 @@ export async function askQuestion(
 
 /** Fetch the current store status (chunk count + document names). */
 export async function getRagStatus(): Promise<RagStatus> {
-  const res = await fetch(`${API_BASE}/api/rag/status`);
+  const res = await fetch(`${RAG_BASE}/api/rag/status`);
   if (!res.ok) throw new Error(`Status failed (${res.status})`);
   return res.json();
 }
