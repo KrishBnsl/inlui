@@ -9,10 +9,10 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     """RAG service configuration — all values can be overridden via env vars."""
 
-    # OpenAI
-    openai_api_key: str = ""
-    rag_embed_model: str = "text-embedding-3-small"
-    rag_llm_model: str = "gpt-4o-mini"
+    # Google Gemini
+    google_api_key: str = ""
+    rag_embed_model: str = "models/text-embedding-004"
+    rag_llm_model: str = "gemini-1.5-flash"
     rag_llm_temperature: float = 0.2
     rag_llm_max_tokens: int = 1024
 

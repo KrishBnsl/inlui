@@ -10,7 +10,7 @@ Orchestrates the full RAG flow:
 
 import logging
 
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.schema import HumanMessage, SystemMessage
 
 from app.config import settings
@@ -24,7 +24,7 @@ logger = logging.getLogger("rag_service.retrieval")
 def retrieve_and_answer(
     question: str,
     vector_store: VectorStore,
-    llm: ChatOpenAI,
+    llm: ChatGoogleGenerativeAI,
     image_b64: str | None = None,
 ) -> AskResponse:
     """
@@ -40,7 +40,7 @@ def retrieve_and_answer(
         The user's natural-language question.
     vector_store : VectorStore
         The FAISS-backed store to search.
-    llm : ChatOpenAI
+    llm : ChatGoogleGenerativeAI
         The chat model to use for answer generation.
     image_b64 : str | None
         Optional base64-encoded image (JPEG/PNG) attached by the user.

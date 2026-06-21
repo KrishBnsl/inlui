@@ -1,5 +1,5 @@
-# Python RAG Service — LangChain + FastAPI
-# ─────────────────────────────────────────
+# Python RAG Service — LangChain + FastAPI + Gemini
+# ──────────────────────────────────────────────────
 # Pinned versions for reproducibility. Uses LangChain 0.3.x (latest stable).
 
 fastapi==0.115.12
@@ -8,7 +8,7 @@ python-multipart==0.0.20
 
 # LangChain ecosystem
 langchain==0.3.25
-langchain-openai==0.3.25
+langchain-google-genai==2.1.5
 langchain-community==0.3.24
 langchain-text-splitters==0.3.8
 

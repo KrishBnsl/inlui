@@ -22,9 +22,9 @@ logger = logging.getLogger("rag_service")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup: create the RAG pipeline. Shutdown: log."""
-    if not settings.openai_api_key:
+    if not settings.google_api_key:
         logger.warning(
-            "OPENAI_API_KEY is not set — RAG endpoints will fail until configured."
+            "GOOGLE_API_KEY is not set — RAG endpoints will fail until configured."
         )
 
     app.state.pipeline = RagPipeline()

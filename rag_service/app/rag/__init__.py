@@ -9,7 +9,7 @@ Usage:
 
 import logging
 
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 from app.config import settings
 from app.models import AskResponse
@@ -34,11 +34,11 @@ class RagPipeline:
         logger.info("Initialising RAG pipeline…")
 
         self.embeddings = create_embeddings()
-        self.llm = ChatOpenAI(
+        self.llm = ChatGoogleGenerativeAI(
             model=settings.rag_llm_model,
             temperature=settings.rag_llm_temperature,
             max_tokens=settings.rag_llm_max_tokens,
-            openai_api_key=settings.openai_api_key,
+            google_api_key=settings.google_api_key,
         )
         self.text_splitter = create_text_splitter()
         self.store = VectorStore(self.embeddings)

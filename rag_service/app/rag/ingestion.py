@@ -12,7 +12,7 @@ import os
 import tempfile
 
 from langchain_community.document_loaders import PyPDFLoader
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.schema import HumanMessage, Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
@@ -45,7 +45,7 @@ def extract_text_from_pdf(content: bytes) -> str:
 def extract_text_from_image(
     content: bytes,
     filename: str,
-    llm: ChatOpenAI,
+    llm: ChatGoogleGenerativeAI,
 ) -> str:
     """
     Extract text from an image using GPT-4o-mini vision.
@@ -80,7 +80,7 @@ def extract_text_from_image(
 def ingest_file(
     content: bytes,
     filename: str,
-    llm: ChatOpenAI,
+    llm: ChatGoogleGenerativeAI,
     text_splitter: RecursiveCharacterTextSplitter,
 ) -> list[Document]:
     """

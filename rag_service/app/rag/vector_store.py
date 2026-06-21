@@ -9,7 +9,7 @@ import logging
 from dataclasses import dataclass, field
 
 from langchain_community.vectorstores import FAISS
-from langchain_openai import OpenAIEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.schema import Document
 
 logger = logging.getLogger("rag_service.vector_store")
@@ -30,7 +30,7 @@ class VectorStore:
     - Tracks which documents have been indexed and their chunk counts.
     """
 
-    def __init__(self, embeddings: OpenAIEmbeddings) -> None:
+    def __init__(self, embeddings: GoogleGenerativeAIEmbeddings) -> None:
         self._embeddings = embeddings
         self._store: FAISS | None = None
         self._indexed_docs: list[IndexedDoc] = []

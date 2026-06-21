@@ -37,13 +37,13 @@ start with a single `docker compose up`.
 
 - Docker & Docker Compose
 - Node.js 18+ (for the frontend)
-- An [OpenAI API key](https://platform.openai.com/api-keys) (for the chatbot)
+- An [Google AI Studio API key](https://aistudio.google.com/app/apikey) (for the chatbot)
 
 ### 1. Set your API key
 
 Create a `.env` file at the project root:
 ```bash
-echo "OPENAI_API_KEY=sk-..." > .env
+echo "GOOGLE_API_KEY=AIza..." > .env
 ```
 
 ### 2. Start all backend services
@@ -143,7 +143,7 @@ curl -X POST http://localhost:8081/api/rag/ask \
 
 | Variable | Description |
 |----------|-------------|
-| `OPENAI_API_KEY` | OpenAI API key — passed to the RAG container |
+| `GOOGLE_API_KEY` | Google API key — passed to the RAG container |
 
 ### `sim_engine/.env` (Rust dev server)
 
@@ -156,9 +156,9 @@ curl -X POST http://localhost:8081/api/rag/ask \
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `OPENAI_API_KEY` | — | OpenAI API key |
-| `RAG_LLM_MODEL` | `gpt-4o-mini` | Chat model (handles text + vision) |
-| `RAG_EMBED_MODEL` | `text-embedding-3-small` | Embedding model |
+| `GOOGLE_API_KEY` | — | Google API key |
+| `RAG_LLM_MODEL` | `gemini-1.5-flash` | Chat model (handles text + vision) |
+| `RAG_EMBED_MODEL` | `models/text-embedding-004` | Embedding model |
 | `RAG_LLM_TEMPERATURE` | `0.2` | LLM sampling temperature |
 | `RAG_TOP_K` | `5` | Number of chunks retrieved per query |
 | `RAG_CHUNK_SIZE` | `512` | Characters per chunk |
@@ -171,6 +171,6 @@ curl -X POST http://localhost:8081/api/rag/ask \
 - **LangChain pipeline** — uses LangChain 0.3.x for the full RAG workflow
 - **FAISS vector store** — in-memory cosine similarity search (no external DB)
 - **PDF indexing** — upload counselling brochures, rulebooks (≤10 pages recommended)
-- **Image OCR** — screenshot your counselling portal status; GPT-4o-mini reads it
+- **Image OCR** — screenshot your counselling portal status; Gemini 1.5 Flash reads it
 - **Contextual Q&A** — answers are grounded in your uploaded documents with source citations
 - **In-memory store** — embeddings are held in RAM; re-upload documents after a restart
