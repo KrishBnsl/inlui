@@ -1,0 +1,10 @@
+# Classification Sanity-Check Benchmark
+
+Binary target: `cutoff_difficulty` (1 = competitive, 0 = relaxed). Sorted by validation F1.
+
+| Model              |   train_time_s |   valid_Accuracy |   valid_Precision |   valid_Recall |   valid_F1 |   valid_ROC_AUC |   test_Accuracy |   test_Precision |   test_Recall |   test_F1 |   test_ROC_AUC |
+|:-------------------|---------------:|-----------------:|------------------:|---------------:|-----------:|----------------:|----------------:|-----------------:|--------------:|----------:|---------------:|
+| XGBoost_Clf        |            4.8 |           0.959  |            0.9594 |         0.95   |     0.9547 |          0.9946 |          0.9561 |           0.9606 |        0.9514 |    0.956  |         0.9936 |
+| LightGBM_Clf       |            4.4 |           0.9555 |            0.9569 |         0.9445 |     0.9506 |          0.9941 |          0.9533 |           0.9599 |        0.9464 |    0.9531 |         0.9931 |
+| LogisticRegression |           28   |           0.9154 |            0.9051 |         0.909  |     0.907  |          0.9783 |          0.9048 |           0.9042 |        0.9061 |    0.9051 |         0.9729 |
+| RandomForest_Clf   |           24.8 |           0.8955 |            0.9071 |         0.8577 |     0.8817 |          0.9663 |          0.8771 |           0.8947 |        0.8555 |    0.8747 |         0.9556 |

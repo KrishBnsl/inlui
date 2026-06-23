@@ -1,0 +1,34 @@
+{
+    "experiment_name": "Day_5_Rigorous_Evaluation",
+    "random_seed": 42,
+    "model_used": "Ridge Regression (Alpha=10.0)",
+    "features_used": [
+        "year",
+        "round",
+        "institute_type_encoded",
+        "institute_encoded",
+        "program_encoded",
+        "category_encoded",
+        "quota_encoded",
+        "gender_encoded",
+        "opening_rank",
+        "seat_pool_encoded"
+    ],
+    "train_years": [
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022
+    ],
+    "validation_years": [
+        2023
+    ],
+    "test_years": [
+        2024
+    ],
+    "monte_carlo_iterations": 1000,
+    "calibration_method": "Empirical Standard Deviation (Floor=100.0)"
+}

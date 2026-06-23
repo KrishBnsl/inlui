@@ -1,0 +1,43 @@
+{
+  "institute_type": {
+    "GFTI": 0,
+    "IIIT": 1,
+    "IIT": 2,
+    "NIT": 3
+  },
+  "category": {
+    "EWS": 0,
+    "OBC-NCL": 1,
+    "OPEN": 2,
+    "SC": 3,
+    "ST": 4
+  },
+  "quota": {
+    "AI": 0,
+    "HS": 1,
+    "OS": 2,
+    "STATE": 3
+  },
+  "gender": {
+    "Female-only": 0,
+    "Gender-Neutral": 1
+  },
+  "degree_type": {
+    "B. Tech / B. Tech (Hons.)": 0,
+    "B.Tech. + M.Tech./MS (Dual Degree)": 1,
+    "Bachelor and Master of Technology (Dual Degree)": 2,
+    "Bachelor of Architecture": 3,
+    "Bachelor of Pharmaceutics": 4,
+    "Bachelor of Planning": 5,
+    "Bachelor of Science": 6,
+    "Bachelor of Science and Master of Science (Dual Degree)": 7,
+    "Bachelor of Technology": 8,
+    "Bachelor of Technology and MBA (Dual Degree)": 9,
+    "Integrated B. Tech. and M. Tech.": 10,
+    "Integrated B. Tech. and M. Tech. /MBA": 11,
+    "Integrated B. Tech. and MBA": 12,
+    "Integrated Master of Science": 13,
+    "Integrated Master of Technology": 14,
+    "Integrated Masters in Technology": 15
+  }
+}

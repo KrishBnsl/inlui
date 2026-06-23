@@ -1,0 +1,337 @@
+{
+  "total_records": 521160,
+  "n_columns": 24,
+  "columns": [
+    "year",
+    "round",
+    "institute",
+    "institute_type",
+    "program",
+    "discipline",
+    "duration_years",
+    "degree_type",
+    "quota",
+    "category",
+    "is_pwd",
+    "gender",
+    "opening_rank",
+    "closing_rank",
+    "is_pwd_rank",
+    "source_file",
+    "source_row_id",
+    "opening_percentile",
+    "closing_percentile",
+    "competitiveness_ratio",
+    "applicants",
+    "rank_spread",
+    "closing_rank_yoy_change",
+    "round_progression"
+  ],
+  "unique_institute": 151,
+  "unique_program": 352,
+  "unique_discipline": 352,
+  "unique_category": 5,
+  "unique_institute_type": 4,
+  "unique_quota": 4,
+  "unique_gender": 2,
+  "unique_years": [
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025,
+    2026
+  ],
+  "n_years": 11,
+  "unique_rounds": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "n_rounds": 7,
+  "missing_values": {
+    "closing_rank_yoy_change": 439206,
+    "round_progression": 98823
+  },
+  "total_missing": 538029,
+  "closing_rank_stats": {
+    "mean": 13376.3,
+    "median": 4298.0,
+    "std": 42265.4,
+    "min": 1,
+    "max": 1497038,
+    "q25": 1332.0,
+    "q75": 11678.0
+  },
+  "opening_rank_stats": {
+    "mean": 10309.1,
+    "median": 3499.0,
+    "std": 29750.2,
+    "min": 1,
+    "max": 1497038,
+    "q25": 1064.0,
+    "q75": 9550.0
+  },
+  "rank_spread_stats": {
+    "mean": 3067.3,
+    "median": 304.0,
+    "std": 19354.5,
+    "min": -3557,
+    "max": 982920,
+    "q25": 0.0,
+    "q75": 1600.0
+  },
+  "top_institutes": {
+    "National Institute of Technology, Rourkela": 19768,
+    "Indian Institute of Technology Kharagpur": 16340,
+    "National Institute of Technology Raipur": 13705,
+    "National Institute of Technology, Warangal": 13656,
+    "National Institute of Technology Calicut": 13103,
+    "National Institute of Technology, Tiruchirappalli": 12760,
+    "Dr. B R Ambedkar National Institute of Technology, Jalandhar": 12638,
+    "National Institute of Technology Karnataka, Surathkal": 12282,
+    "Maulana Azad National Institute of Technology Bhopal": 12082,
+    "National Institute of Technology Patna": 11801,
+    "Motilal Nehru National Institute of Technology Allahabad": 11459,
+    "Visvesvaraya National Institute of Technology, Nagpur": 11342,
+    "National Institute of Technology Durgapur": 11274,
+    "National Institute of Technology Agartala": 10911,
+    "Indian Institute of Engineering Science and Technology, Shibpur": 10883
+  },
+  "top_programs": {
+    "Computer Science and Engineering": 73358,
+    "Electronics and Communication Engineering": 53558,
+    "Mechanical Engineering": 53176,
+    "Civil Engineering": 48297,
+    "Electrical Engineering": 37211,
+    "Chemical Engineering": 30102,
+    "Electrical and Electronics Engineering": 16194,
+    "Metallurgical and Materials Engineering": 15431,
+    "Architecture": 13026,
+    "Information Technology": 12875,
+    "Bio Technology": 9628,
+    "Mathematics and Computing": 8185,
+    "Engineering Physics": 8144,
+    "Mining Engineering": 6226,
+    "Chemistry": 5094
+  },
+  "rows_per_year": {
+    "2016": 24670,
+    "2017": 29011,
+    "2018": 46221,
+    "2019": 56938,
+    "2020": 53011,
+    "2021": 54003,
+    "2022": 57180,
+    "2023": 61050,
+    "2024": 55441,
+    "2025": 70659,
+    "2026": 12976
+  },
+  "most_volatile_branches": [
+    {
+      "institute": "National Institute of Technology Calicut",
+      "program": "Architecture",
+      "category": "OPEN",
+      "cv": 1.85,
+      "mean_rank": 83.0,
+      "std_rank": 153.0,
+      "n_years": 9
+    },
+    {
+      "institute": "Indian Institute of Technology Kharagpur",
+      "program": "Agricultural and Food Engineering",
+      "category": "OPEN",
+      "cv": 1.5603,
+      "mean_rank": 110.0,
+      "std_rank": 172.0,
+      "n_years": 3
+    },
+    {
+      "institute": "Maulana Azad National Institute of Technology Bhopal",
+      "program": "Planning",
+      "category": "SC",
+      "cv": 1.5101,
+      "mean_rank": 1422.0,
+      "std_rank": 2147.0,
+      "n_years": 9
+    },
+    {
+      "institute": "National Institute of Technology Raipur",
+      "program": "Architecture",
+      "category": "EWS",
+      "cv": 1.4428,
+      "mean_rank": 2996.0,
+      "std_rank": 4323.0,
+      "n_years": 7
+    },
+    {
+      "institute": "Visvesvaraya National Institute of Technology, Nagpur",
+      "program": "Architecture",
+      "category": "ST",
+      "cv": 1.3918,
+      "mean_rank": 432.0,
+      "std_rank": 601.0,
+      "n_years": 11
+    },
+    {
+      "institute": "National Institute of Technology, Tiruchirappalli",
+      "program": "Architecture",
+      "category": "SC",
+      "cv": 1.3192,
+      "mean_rank": 163.0,
+      "std_rank": 215.0,
+      "n_years": 9
+    },
+    {
+      "institute": "National Institute of Technology Calicut",
+      "program": "Architecture",
+      "category": "OPEN",
+      "cv": 1.2983,
+      "mean_rank": 308.0,
+      "std_rank": 399.0,
+      "n_years": 9
+    },
+    {
+      "institute": "National Institute of Technology, Kurukshetra",
+      "program": "Computer Engineering",
+      "category": "ST",
+      "cv": 1.24,
+      "mean_rank": 4707.0,
+      "std_rank": 5837.0,
+      "n_years": 6
+    },
+    {
+      "institute": "National Institute of Technology, Tiruchirappalli",
+      "program": "Architecture",
+      "category": "EWS",
+      "cv": 1.232,
+      "mean_rank": 1092.0,
+      "std_rank": 1345.0,
+      "n_years": 7
+    },
+    {
+      "institute": "National Institute of Technology Karnataka, Surathkal",
+      "program": "Electronics and Communication Engineering",
+      "category": "OBC-NCL",
+      "cv": 1.2212,
+      "mean_rank": 222.0,
+      "std_rank": 271.0,
+      "n_years": 9
+    }
+  ],
+  "most_stable_branches": [
+    {
+      "institute": "Indian Institute of Technology Patna",
+      "program": "Economics",
+      "category": "OBC-NCL",
+      "cv": 0.001,
+      "mean_rank": 5533.0,
+      "std_rank": 5.0,
+      "n_years": 3
+    },
+    {
+      "institute": "Indian Institute of Technology Jodhpur",
+      "program": "Chemistry with Specialization",
+      "category": "OBC-NCL",
+      "cv": 0.0047,
+      "mean_rank": 9077.0,
+      "std_rank": 42.0,
+      "n_years": 3
+    },
+    {
+      "institute": "Indian Institute of Technology Mandi",
+      "program": "BS in Chemical Sciences",
+      "category": "ST",
+      "cv": 0.0051,
+      "mean_rank": 1530.0,
+      "std_rank": 8.0,
+      "n_years": 4
+    },
+    {
+      "institute": "Indian Institute of Technology Roorkee",
+      "program": "Energy Engineering",
+      "category": "OPEN",
+      "cv": 0.0063,
+      "mean_rank": 4795.0,
+      "std_rank": 30.0,
+      "n_years": 3
+    },
+    {
+      "institute": "Indian Institute of Technology Delhi",
+      "program": "Biochemical Engineering and Biotechnology",
+      "category": "SC",
+      "cv": 0.0064,
+      "mean_rank": 1567.0,
+      "std_rank": 10.0,
+      "n_years": 3
+    },
+    {
+      "institute": "Indian Institute of Technology Patna",
+      "program": "Economics",
+      "category": "ST",
+      "cv": 0.0077,
+      "mean_rank": 1502.0,
+      "std_rank": 12.0,
+      "n_years": 3
+    },
+    {
+      "institute": "National Institute of Technology, Rourkela",
+      "program": "Artificial Intelligence",
+      "category": "ST",
+      "cv": 0.008,
+      "mean_rank": 315.0,
+      "std_rank": 3.0,
+      "n_years": 3
+    },
+    {
+      "institute": "Sardar Vallabhbhai National Institute of Technology, Surat",
+      "program": "Electronics and VLSI Engineering",
+      "category": "OPEN",
+      "cv": 0.0081,
+      "mean_rank": 22976.0,
+      "std_rank": 185.0,
+      "n_years": 3
+    },
+    {
+      "institute": "Birla Institute of Technology, Deoghar Off-Campus",
+      "program": "Computer Science and Engineering",
+      "category": "SC",
+      "cv": 0.0091,
+      "mean_rank": 11403.0,
+      "std_rank": 104.0,
+      "n_years": 4
+    },
+    {
+      "institute": "National Institute of Technology, Kurukshetra",
+      "program": "Artificial Intelligence and Machine Learning",
+      "category": "EWS",
+      "cv": 0.0093,
+      "mean_rank": 1334.0,
+      "std_rank": 12.0,
+      "n_years": 4
+    }
+  ],
+  "category_distribution": {
+    "OPEN": 141924,
+    "OBC-NCL": 115789,
+    "SC": 102696,
+    "ST": 88872,
+    "EWS": 71879
+  },
+  "institute_type_distribution": {
+    "NIT": 282938,
+    "IIT": 139875,
+    "GFTI": 59518,
+    "IIIT": 38829
+  }
+}

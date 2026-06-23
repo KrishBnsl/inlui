@@ -9,7 +9,7 @@ Thumbs.db
 .vscode/
 .idea/
 *.iml
-
+models/data/
 # ===========================
 # Env & Secrets
 # ===========================
