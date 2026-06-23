@@ -1,0 +1,4 @@
+Model_ID,Type,Target,Train_Date,Test_MAE,Test_RMSE,Test_R2,Hyperparameters,Status
+REG_20260623_RIDGE,Regression,closing_rank,2026-06-23,2.43,5.59,1.0,alpha=10.0,Production
+REG_20260623_EXTRATREES,Regression,closing_rank,2026-06-23,1798.11,6884.59,0.9697,default,Archived
+REG_20260623_LIGHTGBM,Regression,closing_rank,2026-06-23,2069.21,8397.43,0.955,default,Archived

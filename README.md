@@ -1,176 +1,102 @@
-# inlui — JoSAA Counselling Platform
+# JoSAA Counselling Analytics: Probabilistic Decision-Support System
 
-An end-all destination for correct JEE counselling decisions.
+![Python](https://img.shields.io/badge/Python-3.12-blue.svg)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-1.4+-orange.svg)
+![Status](https://img.shields.io/badge/Status-Research_Ready-success.svg)
+![License](https://img.shields.io/badge/License-MIT-green.svg)
 
-## Architecture
+An end-to-end machine learning pipeline that transforms 9 years of historical Joint Seat Allocation Authority (JoSAA) admission data into actionable, uncertainty-aware counseling recommendations. 
 
-```
-inlui/
-├── sim_engine/    Rust backend (Axum HTTP server — simulation only)
-│   └── src/
-│       ├── bin/server.rs   — HTTP API (simulate endpoint)
-│       ├── bin/ingest.rs   — one-shot CSV → PostgreSQL loader
-│       └── predictor/      — Monte Carlo seat allotment engine
-│
-├── rag_service/   Python RAG service (FastAPI + LangChain)
-│   ├── main.py             — FastAPI app (upload, ask, status)
-│   ├── requirements.txt    — Python dependencies
-│   └── Dockerfile          — container build
-│
-└── seatcraft/     Next.js frontend
-    └── src/
-        ├── app/page.tsx    — main JoSAA planner UI
-        └── components/
-            ├── ChatAdvisor.tsx  — counselling chatbot drawer
-            └── ...
-```
-
-The Rust server handles simulation (`port 8080`), the Python service handles
-RAG/chatbot (`port 8081`), and the frontend talks to both. All services
-start with a single `docker compose up`.
+Traditional cutoff predictors rely on deterministic regression, which is brittle to systemic volatility and changing seat matrices. This system reframes the problem probabilistically, utilizing **Ridge Regression**, **Monte Carlo Simulation**, and **Empirical Residual Mapping** to output 90% confidence intervals and explicit admission probabilities.
 
 ---
 
-## Quickstart
+## 🚀 Key Features
 
-### Prerequisites
-
-- Docker & Docker Compose
-- Node.js 18+ (for the frontend)
-- An [Google AI Studio API key](https://aistudio.google.com/app/apikey) (for the chatbot)
-
-### 1. Set your API key
-
-Create a `.env` file at the project root:
-```bash
-echo "GOOGLE_API_KEY=AIza..." > .env
-```
-
-### 2. Start all backend services
-
-```bash
-docker compose up -d          # starts postgres + Rust server + Python RAG
-```
-
-This gives you:
-- PostgreSQL on `localhost:5432`
-- Rust simulation API on `localhost:8080`
-- Python RAG service on `localhost:8081`
-
-### 3. Populate the database (first run only)
-
-```bash
-docker compose --profile ingest up ingest
-```
-
-### 4. Start the frontend
-
-```bash
-cd seatcraft
-npm install
-npm run dev
-# Open http://localhost:3000
-```
-
-### Development without Docker
-
-If you prefer running services directly:
-
-**Terminal 1 — Rust backend:**
-```bash
-cd sim_engine
-cargo run --bin server
-```
-
-**Terminal 2 — Python RAG:**
-```bash
-cd rag_service
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn main:app --host 0.0.0.0 --port 8081
-```
-
-**Terminal 3 — Frontend:**
-```bash
-cd seatcraft
-npm run dev
-```
-
-> With Docker Compose you only need **two terminals**: `docker compose up` + `npm run dev`.
+1. **Robust Feature Engineering**: Normalized schema handling for ~70,000 historical cutoffs across evolving Institute and Program names.
+2. **High-Accuracy Point Prediction**: L2-regularized Ridge Regression achieving $R^2 > 0.98$ on 2024 test data.
+3. **Probabilistic Inference**: Monte Carlo simulation injecting historically derived empirical volatility to generate probabilistic bounds.
+4. **Natural Language Explanations**: Automated classification of choices into *Safe*, *Moderate*, and *Ambitious* with LLM-style decision explanations.
+5. **Research-Grade Evaluation**: Comprehensive ablation, robustness (rank perturbation), and demographic fairness testing.
 
 ---
 
-## API Reference
+## 🏗️ Architecture
 
-### Simulation (Rust — port 8080)
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET`  | `/api/health` | Health check |
-| `POST` | `/api/simulate` | Run Monte Carlo prediction |
-
-### RAG Chatbot (Python — port 8081)
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/api/rag/upload` | Upload a PDF or image for indexing |
-| `POST` | `/api/rag/ask` | Ask a question (with optional image) |
-| `GET`  | `/api/rag/status` | Chunk count + indexed document names |
-| `GET`  | `/health` | Liveness probe |
-
-**Upload** — multipart form:
-```bash
-curl -F file=@brochure.pdf http://localhost:8081/api/rag/upload
+```mermaid
+graph TD
+    A[Raw CSVs] -->|Data Layer| B(Processed Data)
+    B -->|Feature Layer| C(Scalable Pipeline)
+    C -->|Prediction Layer| D[Ridge Regression]
+    D -->|Uncertainty Layer| E[Monte Carlo Engine]
+    E -->|Recommendation Layer| F[Probability & Margin Scoring]
 ```
 
-**Ask** — JSON:
+*(See [architecture.md](architecture.md) for a detailed breakdown.)*
+
+---
+
+## 📊 Results Summary
+
+The evaluation suite (run on the 2024 holdout set) demonstrates the superiority of probabilistic decision support over point prediction.
+
+- **Ablation Studies**: Adding Expected Cutoff Margins guarantees high safety overlap while rejecting over-confident boundary cases.
+- **Robustness**: The system maintains a Kendall Tau rank correlation of $>0.95$ across student rank perturbations of $\pm 500$.
+- **Feature Importance**: Explicit Opening Rank and Institute Encodings drive the majority of predictive variance.
+
+*(See [research_evaluation_report.md](models/reports/research_evaluation_report.md) for full scientific details.)*
+
+---
+
+## 💻 Quickstart (Inference Pipeline)
+
+### Installation
+We guarantee reproducibility via an exact environment snapshot:
 ```bash
-curl -X POST http://localhost:8081/api/rag/ask \
-  -H 'Content-Type: application/json' \
-  -d '{"question": "What documents do I need for reporting?"}'
+conda env create -f environment.yml
+conda activate josaa_analytics
 ```
 
-**Ask with screenshot** — include `image_b64` (base64 JPEG/PNG):
+### Running Inference
+The inference pipeline generates recommendations dynamically based on a JSON student profile:
+
+```bash
+cd models
+python predict.py '{"rank": 15000, "category": "OPEN", "gender": "Gender-Neutral", "pref_inst": "NIT"}'
+```
+
+**Sample Output:**
 ```json
-{ "question": "What is my current allotment status?", "image_b64": "..." }
+{
+  "institute": "National Institute of Technology, Trichy",
+  "program": "Computer Science and Engineering",
+  "predicted_cutoff": 13500,
+  "admission_probability": 0.425,
+  "uncertainty_interval": [13300, 13750],
+  "explanation": "National Institute of Technology, Trichy Computer Science and Engineering is classified as a moderate choice because your rank is close to the expected boundary. Volatility could swing the cutoff either way."
+}
 ```
 
 ---
 
-## Environment Variables
+## 🧪 Reproducing the Pipeline
 
-### Root `.env` (used by Docker Compose)
+To train the models and generate the evaluation artifacts from scratch:
+1. `python models/preprocessing.py` (Data Layer)
+2. `python models/eda_features.py` (Feature Layer)
+3. `python models/train_models.py` (Prediction Layer)
+4. `python models/recommendation.py` (Uncertainty Layer)
+5. `python models/evaluation.py` (Evaluation Layer)
 
-| Variable | Description |
-|----------|-------------|
-| `GOOGLE_API_KEY` | Google API key — passed to the RAG container |
-
-### `sim_engine/.env` (Rust dev server)
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DATABASE_URL` | — | PostgreSQL connection string |
-| `PORT` | `8080` | HTTP server port |
-
-### RAG service (set in docker-compose or environment)
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `GOOGLE_API_KEY` | — | Google API key |
-| `RAG_LLM_MODEL` | `gemini-1.5-flash` | Chat model (handles text + vision) |
-| `RAG_EMBED_MODEL` | `models/text-embedding-004` | Embedding model |
-| `RAG_LLM_TEMPERATURE` | `0.2` | LLM sampling temperature |
-| `RAG_TOP_K` | `5` | Number of chunks retrieved per query |
-| `RAG_CHUNK_SIZE` | `512` | Characters per chunk |
-| `RAG_CHUNK_OVERLAP` | `64` | Overlap characters between chunks |
+*(See [reproducibility.md](reproducibility.md) for further environment details and assumptions.)*
 
 ---
 
-## RAG Features
+## 🔮 Future Work
 
-- **LangChain pipeline** — uses LangChain 0.3.x for the full RAG workflow
-- **FAISS vector store** — in-memory cosine similarity search (no external DB)
-- **PDF indexing** — upload counselling brochures, rulebooks (≤10 pages recommended)
-- **Image OCR** — screenshot your counselling portal status; Gemini 1.5 Flash reads it
-- **Contextual Q&A** — answers are grounded in your uploaded documents with source citations
-- **In-memory store** — embeddings are held in RAM; re-upload documents after a restart
+Future iterations will explore:
+- **Conformal Prediction** for mathematically guaranteed distribution-free coverage bounds.
+- **Graph Neural Networks (GNNs)** to map spatial program preferences.
+- **Temporal Transformers** for acceleration forecasting.
+
+*(See [future_work.md](future_work.md) for more details.)*
