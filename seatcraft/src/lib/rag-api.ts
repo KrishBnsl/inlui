@@ -48,7 +48,8 @@ export async function uploadDocument(file: File): Promise<UploadResponse> {
  */
 export async function askQuestion(
   question: string,
-  imageB64?: string
+  imageB64?: string,
+  mlContext?: string
 ): Promise<AskResponse> {
   const res = await fetch(`${RAG_BASE}/api/rag/ask`, {
     method: "POST",
@@ -56,6 +57,7 @@ export async function askQuestion(
     body: JSON.stringify({
       question,
       image_b64: imageB64 ?? undefined,
+      ml_context: mlContext ?? undefined,
     }),
   });
   if (!res.ok) {

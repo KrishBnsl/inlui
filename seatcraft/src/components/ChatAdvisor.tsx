@@ -23,6 +23,7 @@ import {
   fileToBase64,
   type Source,
 } from "@/lib/rag-api";
+import { getChatContext } from "@/lib/api";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -43,6 +44,7 @@ interface IndexedDoc {
 interface ChatAdvisorProps {
   open: boolean;
   onClose: () => void;
+  recommendationData?: any;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -157,7 +159,7 @@ function MessageBubble({ msg }: { msg: Message }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function ChatAdvisor({ open, onClose }: ChatAdvisorProps) {
+export default function ChatAdvisor({ open, onClose, recommendationData }: ChatAdvisorProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: uid(),
@@ -259,7 +261,17 @@ export default function ChatAdvisor({ open, onClose }: ChatAdvisorProps) {
     setThinking(true);
 
     try {
-      const res = await askQuestion(text, attachedImageB64 ?? undefined);
+      let finalMlContext: string | undefined = undefined;
+      if (recommendationData) {
+        try {
+          const { context_block } = await getChatContext(text, recommendationData);
+          if (context_block) finalMlContext = context_block;
+        } catch (e) {
+          console.warn("Failed to get ml context", e);
+        }
+      }
+
+      const res = await askQuestion(text, attachedImageB64 ?? undefined, finalMlContext);
       setMessages((prev) => [
         ...prev,
         {
@@ -285,7 +297,7 @@ export default function ChatAdvisor({ open, onClose }: ChatAdvisorProps) {
     } finally {
       setThinking(false);
     }
-  }, [input, thinking, attachedImageB64]);
+  }, [input, thinking, attachedImageB64, recommendationData]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {

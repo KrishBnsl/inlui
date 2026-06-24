@@ -10,6 +10,7 @@ class AskRequest(BaseModel):
     """POST /api/rag/ask body."""
     question: str
     image_b64: Optional[str] = None
+    ml_context: Optional[str] = None
 
 
 # ── Responses ───────────────────────────────────────────────────────────────────

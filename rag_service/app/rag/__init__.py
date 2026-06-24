@@ -62,6 +62,7 @@ class RagPipeline:
         self,
         question: str,
         image_b64: str | None = None,
+        ml_context: str | None = None,
     ) -> AskResponse:
         """
         Answer a question using retrieved context.
@@ -72,4 +73,5 @@ class RagPipeline:
             vector_store=self.store,
             llm=self.llm,
             image_b64=image_b64,
+            ml_context=ml_context,
         )

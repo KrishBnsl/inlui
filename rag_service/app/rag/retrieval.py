@@ -26,6 +26,7 @@ def retrieve_and_answer(
     vector_store: VectorStore,
     llm: ChatGoogleGenerativeAI,
     image_b64: str | None = None,
+    ml_context: str | None = None,
 ) -> AskResponse:
     """
     Full retrieval-augmented generation pipeline:
@@ -63,7 +64,8 @@ def retrieve_and_answer(
 
     # ── Step 2: Build prompt ────────────────────────────────────────────────
     system_msg = SystemMessage(content=SYSTEM_PROMPT)
-    user_text = build_user_prompt(context_texts, question)
+    from app.rag.prompts import build_user_prompt_with_ml_context
+    user_text = build_user_prompt_with_ml_context(context_texts, question, ml_context)
 
     # ── Step 3: Call LLM ────────────────────────────────────────────────────
     if image_b64:

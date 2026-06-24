@@ -61,9 +61,10 @@ CLAUDE.md
 tmp/
 
 # ===========================
-# Python / RAG service
+# Python / Services
 # ===========================
 __pycache__/
 *.pyc
-rag_service/.venv/
-rag_service/venv/
+.venv/
+venv/
+.pytest_cache/

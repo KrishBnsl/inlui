@@ -60,7 +60,7 @@ async def ask_question(request: Request, req: AskRequest):
     pipeline = request.app.state.pipeline
 
     try:
-        return pipeline.ask(req.question, image_b64=req.image_b64)
+        return pipeline.ask(req.question, image_b64=req.image_b64, ml_context=req.ml_context)
     except Exception as e:
         logger.exception("Failed to answer question")
         raise HTTPException(500, f"Failed to generate answer: {e}")

@@ -74,5 +74,21 @@ services:
     ports:
       - "8081:8081"
 
+  # ── Python ML Inference service — FastAPI ─────────────────────────────────────
+  inference:
+    build:
+      context: ./inference_service
+      dockerfile: Dockerfile
+    container_name: inlui_inference
+    restart: unless-stopped
+    environment:
+      MODELS_DIR: /app/models
+      DATA_DIR: /app/models/data
+      ARTIFACTS_DIR: /app/models/model_artifacts
+    ports:
+      - "8082:8082"
+    volumes:
+      - ./models:/app/models:ro
+
 volumes:
   postgres_data:

@@ -10,7 +10,7 @@ import ResultsTable, { TableSkeleton } from "@/components/ResultsTable";
 import VolatilityDrawer from "@/components/VolatilityDrawer";
 import ChatAdvisor from "@/components/ChatAdvisor";
 import type { SimulationInput, SimulationResponse, PredictionResult } from "@/lib/types";
-import { runSimulation } from "@/lib/api";
+import { runMLSimulation } from "@/lib/api";
 
 type AppState = "idle" | "loading" | "results";
 
@@ -58,8 +58,8 @@ export default function Home() {
     setError(null);
     setAppState("loading");
     try {
-      // Live backend via Rust sim_engine server
-      const data = await runSimulation(input);
+      // Live backend via ML inference service
+      const data = await runMLSimulation(input);
       setResponse(data);
       setAppState("results");
     } catch (err) {
@@ -286,7 +286,11 @@ export default function Home() {
       />
 
       {/* Counselling Advisor Drawer */}
-      <ChatAdvisor open={chatOpen} onClose={() => setChatOpen(false)} />
+      <ChatAdvisor 
+        open={chatOpen} 
+        onClose={() => setChatOpen(false)} 
+        recommendationData={response} 
+      />
     </div>
   );
 }

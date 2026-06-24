@@ -27,17 +27,30 @@ def build_user_prompt(context_chunks: list[str], question: str) -> str:
     Build the user-facing message that includes retrieved context excerpts
     and the user's question.
     """
+    return build_user_prompt_with_ml_context(context_chunks, question, None)
+
+def build_user_prompt_with_ml_context(
+    context_chunks: list[str], question: str, ml_context: str | None
+) -> str:
+    """
+    Build the user-facing message that includes ML model context (if available),
+    retrieved context excerpts, and the user's question.
+    """
+    ml_block = f"{ml_context}\n\n" if ml_context else ""
+
     if not context_chunks:
         return (
+            f"{ml_block}"
             f"Question: {question}\n\n"
             "Note: No documents have been uploaded yet. "
-            "I will answer from general knowledge."
+            "I will answer from general knowledge and model context."
         )
 
     context = "\n\n---\n\n".join(
         f"[Excerpt {i + 1}]\n{chunk}" for i, chunk in enumerate(context_chunks)
     )
     return (
+        f"{ml_block}"
         f"Relevant excerpts from uploaded documents:\n\n"
         f"{context}\n\n"
         f"════════════════════════════════\n\n"
@@ -45,3 +58,4 @@ def build_user_prompt(context_chunks: list[str], question: str) -> str:
         f"Answer using the excerpts above where possible. "
         f"Note which excerpt supports each point."
     )
+

@@ -5,6 +5,7 @@ import type {
 } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const ML_BASE = process.env.NEXT_PUBLIC_ML_URL ?? "http://localhost:8082";
 
 export async function runSimulation(
   input: SimulationInput
@@ -16,6 +17,44 @@ export async function runSimulation(
   });
   if (!res.ok) throw new Error(`Simulation failed: ${await res.text()}`);
   return res.json();
+}
+
+export async function runMLSimulation(
+  input: SimulationInput
+): Promise<SimulationResponse> {
+  try {
+    const res = await fetch(`${ML_BASE}/predict`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    if (!res.ok) throw new Error(`ML Simulation failed: ${await res.text()}`);
+    return res.json();
+  } catch (err) {
+    console.warn("ML inference service failed, falling back to Rust sim_engine:", err);
+    return runSimulation(input);
+  }
+}
+
+export async function getChatContext(
+  question: string,
+  recommendationOutput: any
+): Promise<{ context_block: string; key_facts: any }> {
+  try {
+    const res = await fetch(`${ML_BASE}/chat-context`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question,
+        recommendation_output: recommendationOutput,
+      }),
+    });
+    if (!res.ok) return { context_block: "", key_facts: {} };
+    return res.json();
+  } catch (err) {
+    console.warn("Failed to get chat context from ML service:", err);
+    return { context_block: "", key_facts: {} };
+  }
 }
 
 // ─── Realistic JoSAA Seat Nodes ───────────────────────────────────────────────

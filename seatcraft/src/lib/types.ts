@@ -66,13 +66,28 @@ export interface PredictionResult {
   probability_percent: number;
   projected_closing_rank: number;
   historical_data: HistoricalDataPoint[];
+
+  // Optional ML metadata
+  confidence_label?: "Safe" | "Moderate" | "Ambitious";
+  uncertainty_lower?: number;
+  uncertainty_upper?: number;
+  safety_margin?: number;
+  explanation?: string;
+  recommendation_score?: number;
 }
+
 
 export interface SimulationResponse {
   total_options: number;
   safest_choice: string;
   top_upgrade: string;
   results: PredictionResult[];
+
+  // Optional ML summary metadata
+  most_ambitious?: string;
+  safe_count?: number;
+  moderate_count?: number;
+  ambitious_count?: number;
 }
 
 export type ProbabilityTier = "safe" | "target" | "reach";

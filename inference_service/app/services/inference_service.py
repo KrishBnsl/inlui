@@ -1,0 +1,177 @@
+"""
+Core inference service.
+
+Responsibilities
+----------------
+1. Filter the universe of choices by the student's profile.
+2. Encode categorical features using the pre-trained label encoders.
+3. Run the preprocessing pipeline + Ridge regression model.
+4. Return a DataFrame of choices with a 'predicted_closing_rank' column.
+
+This module is intentionally stateless — it receives artifacts as arguments
+so it is easy to unit-test without touching the filesystem.
+"""
+
+import logging
+from typing import Any
+
+import numpy as np
+import pandas as pd
+
+logger = logging.getLogger("inference_service.inference_service")
+
+# Feature columns in the exact order the preprocessing pipeline expects
+REQUIRED_FEATURES = [
+    "year", "round",
+    "institute_type_encoded", "category_encoded", "quota_encoded",
+    "gender_encoded", "degree_type_encoded",
+    "opening_rank", "log_opening_rank",
+    "rank_spread", "duration_years",
+    "institute_freq", "program_freq", "category_freq", "institute_type_freq",
+    "hist_mean_closing_rank", "hist_std_closing_rank",
+    "hist_min_closing_rank", "hist_max_closing_rank", "hist_year_count",
+    "prev_round_closing_rank", "round_delta",
+    "closing_rank_vs_hist_mean", "closing_rank_ratio_hist",
+    "is_final_round", "years_since_ews",
+    "is_pwd",
+    "opening_percentile", "competitiveness_ratio", "applicants",
+]
+
+
+# ── Feature encoding ────────────────────────────────────────────────────────────
+
+def encode_features(df: pd.DataFrame, label_encoders: dict) -> pd.DataFrame:
+    """
+    Apply label encoders to produce the integer-encoded feature columns
+    expected by the preprocessing pipeline.
+
+    Columns not present in the encoders dictionary are left unchanged.
+    Unknown categorical values are mapped to -1 (treated as unseen).
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Raw rows from the universe (josaa_cleaned.csv).
+    label_encoders : dict
+        Mapping of {column_name: {str_value: int_code}}.
+
+    Returns
+    -------
+    pd.DataFrame
+        10-column DataFrame in the order expected by preprocessing_pipeline.
+    """
+    encoded = df.copy()
+
+    # Convert any boolean columns to int
+    bool_cols = encoded.select_dtypes(include=["bool"]).columns
+    for c in bool_cols:
+        encoded[c] = encoded[c].astype(int)
+
+    # Ensure all required columns exist (fill with 0 if missing)
+    for col in REQUIRED_FEATURES:
+        if col not in encoded.columns:
+            logger.warning(f"Feature column '{col}' missing — defaulting to 0")
+            encoded[col] = 0
+
+    return encoded[REQUIRED_FEATURES]
+
+
+# ── Universe filtering ──────────────────────────────────────────────────────────
+
+def filter_universe(
+    universe: pd.DataFrame,
+    category: str,
+    gender: str,
+    round_: int,
+    pref_inst_types: list[str] | None,
+    pref_branch_keywords: list[str] | None,
+    advanced_rank: int | None,
+) -> pd.DataFrame:
+    """
+    Return the subset of the universe matching the student's profile.
+
+    Parameters
+    ----------
+    universe : pd.DataFrame
+        Full 2024 Round-6 universe (pre-loaded at startup).
+    category : str
+        e.g. "OBC-NCL"
+    gender : str
+        "Gender-Neutral" or "Female-only"
+    round_ : int
+        Which round's data to use (default 6).
+    pref_inst_types : list[str] | None
+        Optional institute type filter e.g. ["NIT", "IIIT"].
+    pref_branch_keywords : list[str] | None
+        Optional branch keyword filter e.g. ["Computer Science"].
+    advanced_rank : int | None
+        If None, IIT rows are excluded (student has no JEE Advanced rank).
+
+    Returns
+    -------
+    pd.DataFrame
+        Filtered subset (may be empty if no programs match).
+    """
+    mask = (universe["category"] == category) & (universe["gender"] == gender)
+
+    # Exclude IITs if no Advanced rank is provided
+    if advanced_rank is None:
+        mask = mask & (universe["institute_type"] != "IIT")
+
+    # Optional institute type filter
+    if pref_inst_types:
+        mask = mask & (universe["institute_type"].isin(pref_inst_types))
+
+    # Optional branch keyword filter (case-insensitive OR match)
+    if pref_branch_keywords:
+        kw_mask = pd.Series([False] * len(universe), index=universe.index)
+        for kw in pref_branch_keywords:
+            kw_mask = kw_mask | universe["program"].str.contains(kw, case=False, na=False)
+        mask = mask & kw_mask
+
+    return universe[mask].copy()
+
+
+# ── Main inference call ─────────────────────────────────────────────────────────
+
+def run_inference(
+    choices: pd.DataFrame,
+    model: Any,
+    prep_pipeline: Any,
+    label_encoders: dict,
+) -> pd.DataFrame:
+    """
+    Run the trained Ridge regression model on a filtered set of choices.
+
+    Parameters
+    ----------
+    choices : pd.DataFrame
+        Filtered universe rows for this student.
+    model : sklearn estimator
+        The final_regression_model.
+    prep_pipeline : sklearn Pipeline
+        The preprocessing pipeline.
+    label_encoders : dict
+        Label encoder mappings.
+
+    Returns
+    -------
+    pd.DataFrame
+        `choices` with an added 'predicted_closing_rank' column.
+    """
+    if choices.empty:
+        return choices
+
+    features_df = encode_features(choices, label_encoders)
+
+    try:
+        # Pass a DataFrame since ColumnTransformer expects it (with correct column names/order)
+        X = prep_pipeline.transform(features_df)
+        preds = model.predict(X)
+    except Exception as exc:
+        logger.error(f"Model inference failed: {exc}", exc_info=True)
+        raise
+
+    choices = choices.copy()
+    choices["predicted_closing_rank"] = np.maximum(1, np.round(preds)).astype(int)
+    return choices
