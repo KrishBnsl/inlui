@@ -132,14 +132,14 @@ A deterministic point prediction is fragile. We map the empirical residual stand
 *Practical Output*: Instead of outputting "Cutoff will be 5000", the system outputs "You have an 85% probability of admission with a 90% Confidence Interval of [4800, 5200]."
 
 <p align="center">
-  <img src="models/figures/pred_vs_actual.png" alt="Prediction vs Actual" width="48%">
-  <img src="models/figures/uncertainty_calibration.png" alt="Uncertainty Calibration" width="48%">
+  <img src="models/figures/pred_vs_actual.png" alt="Prediction vs Actual" width="40%">
+  <img src="models/figures/uncertainty_calibration.png" alt="Uncertainty Calibration" width="56%">
 </p>
 <p align="center">
-  <img src="models/figures/residuals_plot.png" alt="Residual Distribution" width="80%">
+  <img src="models/figures/residuals_plot.png" alt="Residual Distribution" width="90%">
 </p>
 <p align="center">
-  <img src="models/figures/uncertainty_interval_plot.png" alt="Uncertainty Intervals" width="80%">
+  <img src="models/figures/uncertainty_interval_plot.png" alt="Uncertainty Intervals" width="90%">
 </p>
 
 ### Robustness & Error Patterns

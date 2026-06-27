@@ -394,7 +394,7 @@ def generate_charts(df: pd.DataFrame, fig_dir: Path) -> None:
     _plot_category_comparison(df, fig_dir)
 
     # 5. Institute type comparison
-    _plot_institute_type_comparison(mainstream, fig_dir)
+    _plot_institute_type_comparison(df, fig_dir)
 
     # 6. Top IIT branch trends
     _plot_top_branch_trends(mainstream, fig_dir)
@@ -494,12 +494,14 @@ def _plot_category_comparison(df: pd.DataFrame, fig_dir: Path) -> None:
 
 def _plot_institute_type_comparison(df: pd.DataFrame, fig_dir: Path) -> None:
     """Institute type closing rank comparison — boxplot."""
+    subset = df[(~df["is_pwd"]) & (df["gender"] == "Gender-Neutral") & (df["quota"].isin(["AI", "OS"]))].copy()
+    
     fig, ax = plt.subplots(figsize=(10, 6))
     type_order = ["IIT", "NIT", "IIIT", "GFTI"]
-    sns.boxplot(data=df, x="institute_type", y="closing_rank",
+    sns.boxplot(data=subset, x="institute_type", y="closing_rank",
                 order=type_order, ax=ax, palette="Pastel1",
                 fliersize=1, linewidth=0.8)
-    ax.set_title("Closing Rank by Institute Type (AI · Gender-Neutral · Non-PwD)")
+    ax.set_title("Closing Rank by Institute Type (AI/OS · Gender-Neutral · Non-PwD)")
     ax.set_xlabel("Institute Type")
     ax.set_ylabel("Closing Rank")
     plt.tight_layout()

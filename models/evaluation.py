@@ -213,8 +213,8 @@ def perform_robustness_analysis(merged_test: pd.DataFrame, std_map: pd.DataFrame
     # Plot
     plt.figure(figsize=(8, 5))
     x_labels = [str(p) for p in perturbations if p != 0]
-    plt.plot(x_labels, tau_vals, marker='o', label='Kendall Tau')
-    plt.plot(x_labels, sp_vals, marker='s', label='Spearman Correlation')
+    plt.plot(x_labels, tau_vals, marker='o', linewidth=4, alpha=0.6, label='Kendall Tau')
+    plt.plot(x_labels, sp_vals, marker='s', linestyle='--', linewidth=2, color='orange', label='Spearman Correlation')
     plt.title("Recommendation Stability (Base Rank = 10000)")
     plt.xlabel("Rank Perturbation")
     plt.ylabel("Correlation Coefficient")
@@ -281,7 +281,11 @@ def perform_uncertainty_analysis(merged_test: pd.DataFrame, std_map: pd.DataFram
     
     # Plot
     plt.figure(figsize=(8, 6))
-    sns.scatterplot(x="ci_width", y="abs_error", data=merged_test.sample(min(5000, len(merged_test))), alpha=0.3)
+    plot_df = merged_test.sample(min(5000, len(merged_test))).copy()
+    sns.regplot(
+        x="ci_width", y="abs_error", data=plot_df, 
+        x_jitter=40, scatter_kws={'alpha':0.3, 's':15}, line_kws={'color':'red', 'linewidth':2}
+    )
     plt.title(f"Uncertainty Width vs Actual Error (Pearson r = {corr:.3f})")
     plt.xlabel("Prediction Interval Width (95% CI)")
     plt.ylabel("Absolute Prediction Error")

@@ -268,7 +268,6 @@ def plot_uncertainty_intervals(recommendations: List[pd.DataFrame], figures_dir:
         
     # We will just plot the first profile's top 10 as an example
     df = recommendations[0].head(10).copy()
-    student_rank = 2000 # Hardcoded to match the first profile
     
     df["display_name"] = df["institute"].str.replace("Indian Institute of Technology", "IIT")
     
@@ -282,8 +281,10 @@ def plot_uncertainty_intervals(recommendations: List[pd.DataFrame], figures_dir:
         fmt='o', color='blue', ecolor='lightblue', elinewidth=5, capsize=0, label="Expected Cutoff & 90% CI"
     )
     
-    # Plot student rank
-    plt.axvline(x=student_rank, color='red', linestyle='--', label=f"Student Rank ({student_rank})")
+    # Plot example student ranks to show Safe/Moderate/Ambitious contexts
+    plt.axvline(x=2000, color='green', linestyle='--', alpha=0.7, label="Rank 2000 (Safe)")
+    plt.axvline(x=4000, color='orange', linestyle='--', alpha=0.7, label="Rank 4000 (Moderate)")
+    plt.axvline(x=6000, color='red', linestyle='--', alpha=0.7, label="Rank 6000 (Ambitious)")
     
     plt.xlabel("Closing Rank (Lower is Better/Harder)")
     plt.title("Monte Carlo Prediction Intervals vs. Student Rank")
