@@ -87,16 +87,14 @@ Data cleaning and normalization resolve 9 years of schema evolution by:
 - Ensuring strict temporal splitting: 2016–2023 for training, 2024 for validation, preventing data leakage.
 
 ### Exploratory Data Analysis (EDA)
-<table style="width:100%; border:none;">
-  <tr>
-    <td align="center"><img src="models/figures/01_rank_distributions.png" alt="Rank Distributions" width="100%"><br><em>Rank Distributions</em></td>
-    <td align="center"><img src="models/figures/02_closing_rank_by_year.png" alt="Closing Rank by Year" width="100%"><br><em>Closing Rank by Year</em></td>
-  </tr>
-  <tr>
-    <td align="center"><img src="models/figures/04_category_comparison.png" alt="Category Comparison" width="100%"><br><em>Category Comparison</em></td>
-    <td align="center"><img src="models/figures/05_institute_type_comparison.png" alt="Institute Type Comparison" width="100%"><br><em>Institute Type Comparison</em></td>
-  </tr>
-</table>
+<p align="center">
+  <img src="models/figures/01_rank_distributions.png" alt="Rank Distributions" width="48%">
+  <img src="models/figures/02_closing_rank_by_year.png" alt="Closing Rank by Year" width="48%">
+</p>
+<p align="center">
+  <img src="models/figures/04_category_comparison.png" alt="Category Comparison" width="48%">
+  <img src="models/figures/05_institute_type_comparison.png" alt="Institute Type Comparison" width="48%">
+</p>
 
 ## Modeling
 
@@ -106,8 +104,10 @@ The core predictive layer frames cutoff forecasting as a regression task, predic
 - **Why Ridge?**: Ridge provided the highest accuracy while maintaining absolute immunity to extreme multicollinearity inherent in linearly progressing temporal cutoff trends, vastly outperforming tree-based methods that struggled to extrapolate.
 
 <p align="center">
-  <img src="models/figures/06_top_iit_branch_trends.png" width="48%">
-  <img src="models/figures/08_correlation_heatmap.png" width="48%">
+  <img src="models/figures/06_top_iit_branch_trends.png" alt="Top IIT Branch Trends" width="80%">
+</p>
+<p align="center">
+  <img src="models/figures/08_correlation_heatmap.png" alt="Correlation Heatmap" width="80%">
 </p>
 
 
@@ -131,30 +131,37 @@ A deterministic point prediction is fragile. We map the empirical residual stand
 
 *Practical Output*: Instead of outputting "Cutoff will be 5000", the system outputs "You have an 85% probability of admission with a 90% Confidence Interval of [4800, 5200]."
 
-<table style="width:100%; border:none;">
-  <tr>
-    <td align="center"><img src="models/figures/pred_vs_actual.png" alt="Pred vs Actual" width="100%"><br><em>Prediction vs Actual</em></td>
-    <td align="center"><img src="models/figures/residuals_plot.png" alt="Residuals" width="100%"><br><em>Residual Distribution</em></td>
-  </tr>
-  <tr>
-    <td align="center"><img src="models/figures/uncertainty_calibration.png" alt="Uncertainty Calibration" width="100%"><br><em>Uncertainty Calibration</em></td>
-    <td align="center"><img src="models/figures/uncertainty_interval_plot.png" alt="Intervals" width="100%"><br><em>Uncertainty Intervals</em></td>
-  </tr>
-</table>
+<p align="center">
+  <img src="models/figures/pred_vs_actual.png" alt="Prediction vs Actual" width="48%">
+  <img src="models/figures/uncertainty_calibration.png" alt="Uncertainty Calibration" width="48%">
+</p>
+<p align="center">
+  <img src="models/figures/residuals_plot.png" alt="Residual Distribution" width="80%">
+</p>
+<p align="center">
+  <img src="models/figures/uncertainty_interval_plot.png" alt="Uncertainty Intervals" width="80%">
+</p>
 
 ### Robustness & Error Patterns
 The system handles rank perturbations ($\pm 500$) efficiently. The Kendall Tau rank correlation remained highly stable ($	au > 0.95$), indicating a robust sorting property.
 
-<table style="width:100%; border:none;">
-  <tr>
-    <td align="center"><img src="models/figures/confusion_matrix.png" alt="Confusion Matrix" width="100%"><br><em>Classification Sanity Check</em></td>
-    <td align="center"><img src="models/figures/robustness_stability.png" alt="Robustness Stability" width="100%"><br><em>Robustness Stability</em></td>
-  </tr>
-  <tr>
-    <td align="center"><img src="models/figures/error_by_category.png" alt="Error by Category" width="100%"><br><em>Error by Category</em></td>
-    <td align="center"><img src="models/figures/error_by_institute_type.png" alt="Error by Institute Type" width="100%"><br><em>Error by Institute Type</em></td>
-  </tr>
-</table>
+<p align="center">
+  <img src="models/figures/confusion_matrix.png" alt="Classification Sanity Check" width="48%">
+  <img src="models/figures/robustness_stability.png" alt="Robustness Stability" width="48%">
+</p>
+
+### Error Patterns
+The model's residuals were analyzed across different dimensions to identify systemic biases.
+
+<p align="center">
+  <img src="models/figures/error_by_category.png" alt="Error by Category" width="80%">
+</p>
+<p align="center">
+  <img src="models/figures/error_by_institute_type.png" alt="Error by Institute Type" width="80%">
+</p>
+<p align="center">
+  <img src="models/figures/error_by_year.png" alt="Error by Year" width="80%">
+</p>
 
 ## Frontend Integration
 
