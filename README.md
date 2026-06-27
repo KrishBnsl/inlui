@@ -88,12 +88,12 @@ Data cleaning and normalization resolve 9 years of schema evolution by:
 
 ### Exploratory Data Analysis (EDA)
 <p align="center">
-  <img src="models/figures/01_rank_distributions.png" alt="Rank Distributions" width="48%">
-  <img src="models/figures/02_closing_rank_by_year.png" alt="Closing Rank by Year" width="48%">
+  <img src="models/figures/01_rank_distributions.png" alt="Rank Distributions" width="58%">
+  <img src="models/figures/02_closing_rank_by_year.png" alt="Closing Rank by Year" width="38%">
 </p>
 <p align="center">
-  <img src="models/figures/04_category_comparison.png" alt="Category Comparison" width="48%">
-  <img src="models/figures/05_institute_type_comparison.png" alt="Institute Type Comparison" width="48%">
+  <img src="models/figures/04_category_comparison.png" alt="Category Comparison" width="53%">
+  <img src="models/figures/05_institute_type_comparison.png" alt="Institute Type Comparison" width="43%">
 </p>
 
 ## Modeling
@@ -132,8 +132,8 @@ A deterministic point prediction is fragile. We map the empirical residual stand
 *Practical Output*: Instead of outputting "Cutoff will be 5000", the system outputs "You have an 85% probability of admission with a 90% Confidence Interval of [4800, 5200]."
 
 <p align="center">
-  <img src="models/figures/pred_vs_actual.png" alt="Prediction vs Actual" width="40%">
-  <img src="models/figures/uncertainty_calibration.png" alt="Uncertainty Calibration" width="56%">
+  <img src="models/figures/pred_vs_actual.png" alt="Prediction vs Actual" width="41%">
+  <img src="models/figures/uncertainty_calibration.png" alt="Uncertainty Calibration" width="55%">
 </p>
 <p align="center">
   <img src="models/figures/residuals_plot.png" alt="Residual Distribution" width="90%">
@@ -146,8 +146,8 @@ A deterministic point prediction is fragile. We map the empirical residual stand
 The system handles rank perturbations ($\pm 500$) efficiently. The Kendall Tau rank correlation remained highly stable ($	au > 0.95$), indicating a robust sorting property.
 
 <p align="center">
-  <img src="models/figures/confusion_matrix.png" alt="Classification Sanity Check" width="48%">
-  <img src="models/figures/robustness_stability.png" alt="Robustness Stability" width="48%">
+  <img src="models/figures/confusion_matrix.png" alt="Classification Sanity Check" width="35%">
+  <img src="models/figures/robustness_stability.png" alt="Robustness Stability" width="61%">
 </p>
 
 ### Error Patterns
