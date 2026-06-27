@@ -1,142 +1,119 @@
 # JoSAA Counselling Analytics: Probabilistic Decision-Support System
 
-The JoSAA Counselling Analytics system is an end-to-end machine learning pipeline that transforms 9 years of historical Joint Seat Allocation Authority (JoSAA) admission data into actionable, uncertainty-aware counseling recommendations. 
-
-Traditional cutoff predictors rely on deterministic point predictions, which are brittle to systemic volatility and changing seat matrices. This system reframes the problem probabilistically, utilizing **Ridge Regression**, **Monte Carlo Simulation**, and **Empirical Residual Mapping** to output 90% confidence intervals and explicit admission probabilities, scoring choices on a spectrum of *Safe*, *Moderate*, and *Ambitious*.
-
----
+The JoSAA Counselling Analytics system is an end-to-end machine learning pipeline that transforms historical Joint Seat Allocation Authority (JoSAA) admission data into actionable, uncertainty-aware counseling recommendations.
 
 ## Table of Contents
-1. [Problem Statement](#problem-statement)
-2. [Dataset](#dataset)
-3. [Data Preprocessing](#data-preprocessing)
-4. [Exploratory Data Analysis (EDA)](#exploratory-data-analysis-eda)
+1. [Problem Overview](#problem-overview)
+2. [System Workflow](#system-workflow)
+3. [Repository Structure](#repository-structure)
+4. [Data and Preprocessing](#data-and-preprocessing)
 5. [Modeling](#modeling)
-6. [Evaluation](#evaluation)
-7. [Uncertainty and Monte Carlo Engine](#uncertainty-and-monte-carlo-engine)
-8. [Recommendation System](#recommendation-system)
-9. [Robustness, Fairness, and Failure Analysis](#robustness-fairness-and-failure-analysis)
-10. [Feature Importance](#feature-importance)
-11. [Case Studies](#case-studies)
-12. [Reproducibility](#reproducibility)
-13. [Limitations](#limitations)
-14. [Future Work](#future-work)
-15. [Conclusion](#conclusion)
+6. [Inference and Recommendation Flow](#inference-and-recommendation-flow)
+7. [Evaluation and Uncertainty](#evaluation-and-uncertainty)
+8. [Frontend Integration](#frontend-integration)
+9. [Results and Key Takeaways](#results-and-key-takeaways)
+10. [Limitations](#limitations)
+11. [Future Work](#future-work)
+12. [Setup and Run Instructions](#setup-and-run-instructions)
 
----
+## Problem Overview
+Nationwide centralized engineering admissions (like India's JoSAA) present a highly volatile, high-stakes matching problem for millions of students. JoSAA manages the allocation of over 50,000 engineering seats across 100+ premier institutes. Traditional approaches rely on deterministic cutoff predictions, which are brittle to systemic volatility and changing seat matrices. 
 
-## Problem Statement
+This project solves the problem by providing a probabilistic recommendation framework that leverages Ridge Regression combined with Monte Carlo simulation to output admission probabilities and uncertainty bounds, guiding students with robust decision-support tools.
 
-Nationwide centralized engineering admissions (like India's JoSAA) present a highly volatile, high-stakes matching problem for millions of students. JoSAA manages the allocation of over 50,000 engineering seats across 100+ premier institutes (IITs, NITs, IIITs) in India. Students must rank their preferences prior to allocation, and a sub-optimal preference list can easily cost a student a seat. Historical cutoff data is useful but deeply noisy due to dynamic popularity shifts. This project solves the problem by providing uncertainty-aware, mathematically grounded decision-support tools rather than fragile deterministic predictions.
+## System Workflow
 
----
+The end-to-end workflow of the system is designed to take raw historical data and transform it into user-facing probabilistic recommendations:
 
-## Dataset
+```mermaid
+graph TD
+    A[Raw JoSAA Data Collection] --> B(Preprocessing & Normalization)
+    B --> C(Feature Engineering)
+    C --> D[Model Training]
+    D --> E[Cutoff Prediction]
+    E --> F[Uncertainty Estimation]
+    F --> G[Recommendation Ranking]
+    G --> H[Inference API / Runtime Prediction]
+    H --> I[Frontend Display of Recommendations]
+    H --> J[RAG / Chatbot Explanation Layer]
+```
 
-The dataset aggregates 9 years of historical JoSAA cutoffs (2016-2024), representing over 521,000 unique allocation thresholds.
-- **Scope**: Covers 151 unique institutes and 352 unique programs.
-- **Key Fields**: `year`, `round`, `institute`, `institute_type`, `program`, `category`, `quota`, `gender`, `opening_rank`, and `closing_rank`.
-- **Validation Strategy**: A strict temporal split is enforced. Data from 2016–2023 is used for training, 2024 for validation/hyperparameter tuning, and 2025/2026 data for held-out one-shot testing. This prevents future cutoff patterns from leaking into historical feature statistics.
+1. **Raw JoSAA Data Collection**: Ingestion of 9 years of cutoff data (2016-2024).
+2. **Preprocessing & Normalization**: Standardizing names, resolving schema shifts, and handling missing data.
+3. **Feature Engineering**: Transforming categorical metadata into encoded labels and scaling numerical fields.
+4. **Model Training**: Fitting an L2-regularized Ridge Regression model.
+5. **Cutoff Prediction**: Generating point-estimates for the closing rank.
+6. **Uncertainty Estimation**: Using empirical residual analysis and Monte Carlo simulations to calculate confidence intervals.
+7. **Recommendation Ranking**: Scoring options based on absolute admission probability and safety margins.
+8. **Inference API / Runtime Prediction**: Serving the model artifacts via a low-latency API.
+9. **Frontend Display**: Presenting the ranked options dynamically to the user.
+10. **Chatbot / Explanation Layer**: Utilizing a RAG service to explain the recommendations natively.
 
----
+## Repository Structure
 
-## Data Preprocessing
+The repository is modularized into several major components that handle distinct parts of the system pipeline:
 
-Data cleaning and normalization were critical to handling 9 years of schema evolution.
-- Standardized inconsistent institute names and branch nomenclature.
-- Imputed missing values implicitly and resolved edge-case permutations.
-- Normalized category distributions (e.g., handling the introduction of the EWS category in 2019).
-- Addressed data quality issues such as 2016-2017 lacking a gender column (filled as Gender-Neutral) and distinct rank scales for PwD categories.
+* **`models/`**: The core machine learning directory containing all model training, evaluation, preprocessing, and experiment code. 
+* **`inference_service/`**: The runtime API responsible for loading model artifacts, validating user input, predicting cutoffs, applying Monte Carlo logic, and returning the recommendation list and safety labels to the frontend.
+* **`sim_engine/`**: A high-performance simulation engine written in Rust, responsible for processing large-scale cutoff data variations and computationally intensive Monte Carlo bounds where Python becomes a bottleneck.
+* **`rag_service/`**: A Python-based Retrieval-Augmented Generation (RAG) service that acts as the chatbot and explanation layer for the recommendation outputs. *(Note: While the prompt references a rank folder and a second Rust folder, the current repository utilizes this module for ranking and RAG capabilities).*
+* **`seatcraft/`**: The Next.js frontend application providing the user interface for inputting profiles and viewing recommendations.
 
----
+### The `models/` Directory
+This folder encapsulates the entire offline ML pipeline:
+- `preprocessing.py`: Executes data cleaning and normalization.
+- `eda_features.py`: Generates data distributions, correlation heatmaps, and scales features.
+- `train_models.py`: Handles temporal splitting, cross-validation, and Ridge optimization.
+- `recommendation.py`: Derives empirical uncertainty boundaries and establishes the Monte Carlo simulation logic.
+- `evaluation.py` / `benchmark.py`: Runs comprehensive evaluation suites and benchmarks latency.
+- `model_artifacts/`: Contains saved model weights (`preprocessing_pipeline.joblib`, `final_regression_model.joblib`) for inference.
+- `figures/` & `reports/`: Stores all generated reports, visual plots, and benchmark results.
 
-## Exploratory Data Analysis (EDA)
+### The `inference_service/` Directory
+This folder bridges the trained models with the end-user:
+- **Model Artifact Loading**: Loads `joblib` binaries dynamically into memory.
+- **Input Validation**: Validates student profiles (Rank, Gender, Category, Quota).
+- **Cutoff Prediction & Uncertainty**: Runs the input through the Ridge model and applies the $\sigma_{min}$ Monte Carlo sampling.
+- **Recommendation Generation**: Scores the output and assigns safety labels (Safe, Moderate, Ambitious).
+- **API Endpoints**: Connects the generated lists to the `seatcraft` frontend.
 
-The EDA phase revealed several critical macro-trends in engineering admissions:
-- **Cutoffs by Year**: Steady structural shifts as the applicant pool expands.
-- **Cutoffs by Round**: Later rounds generally experience relaxed cutoffs, though the delta varies significantly by institute tier.
-- **Category & Institute Tier**: Clear stratification between IITs, NITs, IIITs, and GFTIs.
+## Data and Preprocessing
 
-### Key Visualizations
+The dataset aggregates 9 years of historical JoSAA cutoffs (2016-2024), representing over 521,000 unique allocation thresholds across 151 unique institutes and 352 unique programs.
 
-*Rank Distributions & Closing Rank by Year*
-<p align="center">
-  <img src="models/figures/01_rank_distributions.png" width="45%">
-  <img src="models/figures/02_closing_rank_by_year.png" width="45%">
-</p>
+Data cleaning and normalization resolve 9 years of schema evolution by:
+- Standardizing inconsistent institute names and branch nomenclature.
+- Imputing missing values and resolving edge-case permutations (e.g., EWS category introduction).
+- Ensuring strict temporal splitting: 2016–2023 for training, 2024 for validation, preventing data leakage.
 
-*Category & Institute Type Comparisons*
-<p align="center">
-  <img src="models/figures/04_category_comparison.png" width="45%">
-  <img src="models/figures/05_institute_type_comparison.png" width="45%">
-</p>
-
-*Top IIT Branch Trends & Correlation Heatmap*
-<p align="center">
-  <img src="models/figures/06_top_iit_branch_trends.png" width="45%">
-  <img src="models/figures/08_correlation_heatmap.png" width="45%">
-</p>
-
----
+### Exploratory Data Analysis (EDA)
+<table style="width:100%; border:none;">
+  <tr>
+    <td align="center"><img src="models/figures/01_rank_distributions.png" alt="Rank Distributions" width="100%"><br><em>Rank Distributions</em></td>
+    <td align="center"><img src="models/figures/02_closing_rank_by_year.png" alt="Closing Rank by Year" width="100%"><br><em>Closing Rank by Year</em></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="models/figures/04_category_comparison.png" alt="Category Comparison" width="100%"><br><em>Category Comparison</em></td>
+    <td align="center"><img src="models/figures/05_institute_type_comparison.png" alt="Institute Type Comparison" width="100%"><br><em>Institute Type Comparison</em></td>
+  </tr>
+</table>
 
 ## Modeling
 
 The core predictive layer frames cutoff forecasting as a regression task, predicting the `closing_rank` (JEE rank of the last admitted student).
 - **Setup**: High cardinality categorical variables were encoded, and numerical fields were scaled via `StandardScaler`.
-- **Families Compared**: Ridge, ExtraTrees, LightGBM, XGBoost, RandomForest, and HistGradientBoosting.
 - **Best Model**: L2-regularized **Ridge Regression** ($\alpha=10.0$).
-- **Why Ridge?**: Ridge provided the highest accuracy while maintaining absolute immunity to the extreme multicollinearity inherent in linearly progressing temporal cutoff trends, outperforming tree-based methods that struggled to extrapolate beyond historical bounds.
-
----
-
-## Evaluation
-
-The Ridge model achieved near-perfect variance explanation on the holdout test set:
-
-| Metric | Test Value |
-|---|---|
-| **MAE** | 0.74 |
-| **RMSE** | 1.81 |
-| **R²** | 1.000 |
-| **MedAE** | 0.54 |
-
-### Prediction Quality and Residuals
-<p align="center">
-  <img src="models/figures/pred_vs_actual.png" width="45%">
-  <img src="models/figures/residuals_plot.png" width="45%">
-</p>
-
-### Error Patterns
-- **By Category**: OPEN category represents the highest absolute error due to its wider rank scale, while SC/ST categories show tighter absolute bounds.
-- **By Institute Type**: GFTIs and NITs have much wider cutoff variance compared to IITs, making them slightly harder to predict optimally.
-
-*Classification Sanity Check (Competitiveness Prediction)*
-A secondary classifier attempting to predict whether a branch was tightening or loosening achieved a Test F1 of 0.956 (XGBoost), validating the strong underlying feature quality.
+- **Why Ridge?**: Ridge provided the highest accuracy while maintaining absolute immunity to extreme multicollinearity inherent in linearly progressing temporal cutoff trends, vastly outperforming tree-based methods that struggled to extrapolate.
 
 <p align="center">
-  <img src="models/figures/confusion_matrix.png" width="45%">
+  <img src="models/figures/06_top_iit_branch_trends.png" width="48%">
+  <img src="models/figures/08_correlation_heatmap.png" width="48%">
 </p>
 
----
 
-## Uncertainty and Monte Carlo Engine
+## Inference and Recommendation Flow
 
-A deterministic point prediction is fragile in counseling; an unexpected surge in a branch's popularity can invalidate a safe prediction. Uncertainty modeling mitigates this.
-
-- **Monte Carlo Logic**: We calculate the empirical residual standard deviation grouped by Institute Type and Allocation Round, injecting a minimum volatility floor ($\sigma_{min} = 100$). For inference, we simulate $N=1000$ draws from $\mathcal{N}(\mu_{pred}, \sigma_{empirical})$ to generate a predictive admission distribution.
-- **Practical Meaning**: Instead of outputting "Cutoff will be 5000", the system outputs "You have an 85% probability of admission with a 90% Confidence Interval of [4800, 5200]."
-
-### Uncertainty Calibration & Intervals
-<p align="center">
-  <img src="models/figures/uncertainty_calibration.png" width="45%">
-  <img src="models/figures/uncertainty_interval_plot.png" width="45%">
-</p>
-
----
-
-## Recommendation System
-
-Recommendations are scored using a composite heuristic balancing absolute Admission Probability and normalized Safety Margin. 
+Instead of relying on fragile point predictions, recommendations are scored using a composite heuristic balancing absolute Admission Probability and normalized Safety Margin. 
 
 Choices are dynamically classified into:
 - **Safe**: Admission Probability $\geq$ 0.80
@@ -145,108 +122,87 @@ Choices are dynamically classified into:
 
 This creates a preference-matched list that balances high-probability safeties with calculated stretch targets.
 
----
+## Evaluation and Uncertainty
 
-## Robustness, Fairness, and Failure Analysis
+The Ridge model achieved near-perfect variance explanation on the holdout test set (MAE = 0.74, R² = 1.000).
 
-### Robustness
-To ensure the system doesn't produce brittle recommendations that wildly shift based on minor rank differences, we tested it under rank perturbations ($\pm 500$). The Kendall Tau rank correlation remained highly stable ($	au > 0.95$), indicating a robust sorting property.
+### Uncertainty and Monte Carlo Engine
+A deterministic point prediction is fragile. We map the empirical residual standard deviation grouped by Institute Type and Allocation Round, injecting a minimum volatility floor ($\sigma_{min} = 100$). For inference, we simulate $N=1000$ draws from $\mathcal{N}(\mu_{pred}, \sigma_{empirical})$ to generate a predictive admission distribution.
 
-<p align="center">
-  <img src="models/figures/robustness_stability.png" width="50%">
-</p>
+*Practical Output*: Instead of outputting "Cutoff will be 5000", the system outputs "You have an 85% probability of admission with a 90% Confidence Interval of [4800, 5200]."
 
-### Fairness
-Error distribution across demographic groups:
-<p align="center">
-  <img src="models/figures/error_by_category.png" width="45%">
-  <img src="models/figures/error_by_institute_type.png" width="45%">
-</p>
+<table style="width:100%; border:none;">
+  <tr>
+    <td align="center"><img src="models/figures/pred_vs_actual.png" alt="Pred vs Actual" width="100%"><br><em>Prediction vs Actual</em></td>
+    <td align="center"><img src="models/figures/residuals_plot.png" alt="Residuals" width="100%"><br><em>Residual Distribution</em></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="models/figures/uncertainty_calibration.png" alt="Uncertainty Calibration" width="100%"><br><em>Uncertainty Calibration</em></td>
+    <td align="center"><img src="models/figures/uncertainty_interval_plot.png" alt="Intervals" width="100%"><br><em>Uncertainty Intervals</em></td>
+  </tr>
+</table>
 
-### Failure Analysis
-An analysis of the top 100 largest residual errors revealed that the majority of failures occur in:
-- **Newer NITs** (e.g., NIT Mizoram) suffering from extreme low-volume volatility.
-- **Round 1 and Round 2**, before the allocation cascade stabilizes.
-- **Specific Categories (PwD)** where seat counts are so low that cutoffs behave erratically.
+### Robustness & Error Patterns
+The system handles rank perturbations ($\pm 500$) efficiently. The Kendall Tau rank correlation remained highly stable ($	au > 0.95$), indicating a robust sorting property.
 
----
+<table style="width:100%; border:none;">
+  <tr>
+    <td align="center"><img src="models/figures/confusion_matrix.png" alt="Confusion Matrix" width="100%"><br><em>Classification Sanity Check</em></td>
+    <td align="center"><img src="models/figures/robustness_stability.png" alt="Robustness Stability" width="100%"><br><em>Robustness Stability</em></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="models/figures/error_by_category.png" alt="Error by Category" width="100%"><br><em>Error by Category</em></td>
+    <td align="center"><img src="models/figures/error_by_institute_type.png" alt="Error by Institute Type" width="100%"><br><em>Error by Institute Type</em></td>
+  </tr>
+</table>
 
-## Feature Importance
+## Frontend Integration
 
-We utilized Permutation Importance to rank the driving factors behind the Ridge model's predictions:
-1. `hist_mean_closing_rank`
-2. `hist_min_closing_rank`
-3. `opening_rank`
-4. `hist_std_closing_rank`
+The `seatcraft` module connects to the `inference_service` to provide an interactive dashboard where students input their rank, category, and preferred engineering branches. The frontend visually separates recommendations by their safety classification, displaying the probabilistic bounds natively, ensuring that students make statistically safe choices.
 
-**Interpretability**: `opening_rank` and historical closing averages drive the predictions substantially, validating that historical precedent and top-admitted student quality are the strongest proxies for final cutoffs.
+## Results and Key Takeaways
 
----
-
-## Case Studies
-
-The system generates practical, dynamic inference outputs. Below are examples of the probabilistic recommendation engine in action:
-
-### Profile 1: High Achiever
-- **Rank:** 2000 | **Category:** OPEN | **Preference:** IIT - Computer Science
-
-**Top Recommendation:**
-- **Institute:** Indian Institute of Technology Bhilai (CSE)
-- **Predicted Cutoff:** 7382
-- **Admission Probability:** 100.0%
-- **90% Confidence Interval:** [7224 - 7547]
-- **Classification:** Safe
-
-### Profile 2: Targeted State Student
-- **Rank:** 40000 | **Category:** OPEN | **Preference:** NIT - Civil
-
-**Top Recommendation:**
-- **Institute:** National Institute of Technology, Mizoram (Civil)
-- **Predicted Cutoff:** 626229
-- **Admission Probability:** 100.0%
-- **90% Confidence Interval:** [626062 - 626398]
-- **Classification:** Safe
-
-*(Detailed outputs can be generated natively via the inference pipeline.)*
-
----
-
-## Reproducibility
-
-This repository is designed for complete reproducibility from scratch.
-
-### Key Scripts
-- `models/preprocessing.py`: Executes data cleaning and normalization.
-- `models/eda_features.py`: Generates all distributions, correlation heatmaps, and scales features.
-- `models/train_models.py`: Handles temporal splitting, cross-validation, and Ridge optimization.
-- `models/recommendation.py`: Derives empirical uncertainty boundaries and establishes the Monte Carlo logic.
-- `models/evaluation.py`: Runs the comprehensive evaluation suite (Ablation, Fairness, Failure analysis).
-- `models/benchmark.py`: Benchmarks latency and MC scalability.
-
-### Artifacts (in `models/model_artifacts/`)
-- `experiment_config.json`: Captures seed, configurations, and environment assumptions.
-- `preprocessing_pipeline.joblib` & `final_regression_model.joblib`: The production inference binaries.
-- `residuals_analysis.csv` & `predictions_test.csv`: Evaluation outputs.
-
----
+1. **Robustness**: The Kendall Tau rank correlation remained highly stable ($	au > 0.95$) under rank perturbations ($\pm 500$), indicating a robust sorting property.
+2. **Feature Importance**: `opening_rank` and historical closing averages are the strongest proxy for final cutoffs.
+3. **Failure Analysis**: The majority of residual errors occur in newer NITs (low-volume volatility) and specific categories with extremely low seat counts.
 
 ## Limitations
 
-1. **Lack of Individual Candidate Data**: The system predicts branch-level cutoffs, acting as a proxy for individual admission probability.
-2. **Policy Dependency**: Public cutoff data inherently reflects historical seat matrix conditions and JoSAA policies. Unprecedented policy shifts (e.g., sudden introduction of supernumerary seats) may disrupt accuracy.
-3. **EWS Volatility**: The EWS category was introduced in 2019, providing a much shorter temporal window for longitudinal trend modeling.
-
----
+1. **Lack of Individual Data**: The system predicts branch-level cutoffs, acting as a proxy for individual admission probability.
+2. **Policy Dependency**: Public cutoff data inherently reflects historical seat matrix conditions. Unprecedented policy shifts may disrupt accuracy.
+3. **EWS Volatility**: The EWS category provides a shorter temporal window for longitudinal trend modeling.
 
 ## Future Work
 
-1. **Conformal Prediction**: Shifting from Gaussian empirical assumptions to non-parametric conformal regression for mathematically guaranteed, distribution-free coverage bounds.
-2. **Graph Neural Networks (GNNs)**: Modeling institutes as nodes in a preference graph to capture spatial correlations natively.
-3. **Temporal Transformers**: Utilizing LSTMs or Transformers over the time-series sequence of cutoffs (2016 -> 2024) to capture velocity and acceleration in branch popularity.
-4. **Learning-to-Rank**: Upgrading the heuristic recommendation scoring to a multi-objective ML ranker optimizing jointly for probability and placement outcomes.
+1. **Conformal Prediction**: Shifting to non-parametric conformal regression for mathematically guaranteed bounds.
+2. **Graph Neural Networks (GNNs)**: Modeling institutes as nodes to capture spatial correlations.
+3. **Temporal Transformers**: Utilizing LSTMs or Transformers over the time-series sequence of cutoffs.
+4. **Learning-to-Rank**: Upgrading the heuristic recommendation scoring to a multi-objective ML ranker.
 
----
+## Setup and Run Instructions
 
-## Conclusion
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/username/inlui.git
+   cd inlui
+   ```
 
-By shifting the paradigm from deterministic cutoff prediction to probabilistic decision-support, this JoSAA analytics system mitigates the inherent risk of seat-allocation volatility. It provides students with mathematically grounded, interpretable, and highly robust counseling recommendations, serving as an end-to-end blueprint for uncertainty-aware machine learning in high-stakes matching environments.
+2. **Environment Setup** (Using Docker Compose for the entire stack):
+   ```bash
+   docker-compose up --build
+   ```
+
+3. **Running the Modeling Pipeline** (Locally):
+   ```bash
+   cd models
+   pip install -r requirements.txt
+   python preprocessing.py
+   python train_models.py
+   ```
+
+4. **Running the Frontend**:
+   ```bash
+   cd seatcraft
+   npm install
+   npm run dev
+   ```
