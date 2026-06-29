@@ -4,7 +4,7 @@ Retrieval + answer generation.
 Orchestrates the full RAG flow:
   1. Retrieve top-k chunks from the vector store
   2. Build a prompt with context + user question
-  3. Call the LLM (text-only or multimodal with an attached image)
+  3. Call Gemini (text-only or multimodal with an attached image)
   4. Return the answer with source citations
 """
 
@@ -32,7 +32,7 @@ def retrieve_and_answer(
     Full retrieval-augmented generation pipeline:
       1. Similarity search against the vector store
       2. Build a prompt with the retrieved excerpts
-      3. Call GPT-4o-mini (with optional inline image)
+      3. Call Gemini (with optional inline image)
       4. Return structured response with sources
 
     Parameters

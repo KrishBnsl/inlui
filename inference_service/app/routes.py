@@ -60,7 +60,12 @@ def _run_full_pipeline(request: Request, req: PredictRequest) -> tuple[pd.DataFr
     choices_raw : pd.DataFrame
         The filtered universe rows (for historical data lookup).
     """
-    artifacts = request.app.state.artifacts
+    artifacts = getattr(request.app.state, "artifacts", None)
+    if artifacts is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Inference artifacts are not loaded. Check ARTIFACTS_DIR and DATA_DIR.",
+        )
 
     # ── Filter universe ────────────────────────────────────────────────────
     choices = filter_universe(
@@ -71,6 +76,8 @@ def _run_full_pipeline(request: Request, req: PredictRequest) -> tuple[pd.DataFr
         pref_inst_types=req.pref_inst_types,
         pref_branch_keywords=req.pref_branch_keywords,
         advanced_rank=req.advanced_rank,
+        home_state=req.home_state,
+        is_pwd=req.is_pwd,
     )
 
     if choices.empty:

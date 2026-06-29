@@ -3,7 +3,7 @@ Document ingestion — extracts text from PDFs and images, then chunks it.
 
 Supported formats:
   - PDF  → PyPDFLoader (pure Python, no external deps)
-  - PNG / JPG / JPEG / WEBP → GPT-4o-mini vision OCR
+  - PNG / JPG / JPEG / WEBP → Gemini vision OCR
 """
 
 import base64
@@ -48,7 +48,7 @@ def extract_text_from_image(
     llm: ChatGoogleGenerativeAI,
 ) -> str:
     """
-    Extract text from an image using GPT-4o-mini vision.
+    Extract text from an image using Gemini vision.
 
     Sends the image as a base64-encoded data URL and asks the model
     to perform OCR, returning all visible text.

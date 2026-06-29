@@ -11,7 +11,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "SeatCraft — JoSAA Seat Allotment Probability Engine",
   description:
-    "Statistically rigorous JoSAA seat allotment predictions using Monte Carlo simulation over 8 years of historical cutoff data. Know your true odds before counselling day.",
+    "Statistically rigorous JoSAA seat allotment predictions using Monte Carlo simulation over historical cutoff data. Know your true odds before counselling day.",
   keywords: ["JoSAA", "JEE", "seat allotment", "counselling", "prediction", "IIT", "NIT"],
   openGraph: {
     title: "SeatCraft — JoSAA Probability Engine",

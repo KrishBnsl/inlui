@@ -10,7 +10,7 @@ import ResultsTable, { TableSkeleton } from "@/components/ResultsTable";
 import VolatilityDrawer from "@/components/VolatilityDrawer";
 import ChatAdvisor from "@/components/ChatAdvisor";
 import type { SimulationInput, SimulationResponse, PredictionResult } from "@/lib/types";
-import { runMLSimulation } from "@/lib/api";
+import { getMLHealth, runMLSimulation } from "@/lib/api";
 
 type AppState = "idle" | "loading" | "results";
 
@@ -58,7 +58,10 @@ export default function Home() {
     setError(null);
     setAppState("loading");
     try {
-      // Live backend via ML inference service
+      const health = await getMLHealth();
+      if (!health.artifacts_loaded) {
+        throw new Error("ML inference service is running, but model artifacts are not loaded.");
+      }
       const data = await runMLSimulation(input);
       setResponse(data);
       setAppState("results");
@@ -150,11 +153,11 @@ export default function Home() {
 
                 <div className="grid grid-cols-3 gap-3 max-w-xl border-y border-neutral-800 py-4">
                   <div>
-                    <p className="text-lg font-semibold text-white tabular-nums">10k</p>
+                    <p className="text-lg font-semibold text-white tabular-nums">1k</p>
                     <p className="text-xs text-neutral-500">simulations</p>
                   </div>
                   <div>
-                    <p className="text-lg font-semibold text-white tabular-nums">8 yrs</p>
+                    <p className="text-lg font-semibold text-white tabular-nums">9 yrs</p>
                     <p className="text-xs text-neutral-500">cutoff history</p>
                   </div>
                   <div>
@@ -217,7 +220,7 @@ export default function Home() {
                   Running simulation
                 </div>
                 <p className="text-neutral-500 text-xs">
-                  Sampling from 8 years of closing rank distributions
+                  Calling ML inference service and model artifacts
                 </p>
               </div>
               <IntakeForm onSubmit={handleSubmit} isLoading={true} />

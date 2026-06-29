@@ -10,7 +10,6 @@ import {
   Image as ImageIcon,
   Loader2,
   Upload,
-  CheckCircle2,
   AlertCircle,
   ChevronDown,
   ChevronUp,
@@ -24,6 +23,7 @@ import {
   type Source,
 } from "@/lib/rag-api";
 import { getChatContext } from "@/lib/api";
+import type { SimulationResponse } from "@/lib/types";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -44,7 +44,7 @@ interface IndexedDoc {
 interface ChatAdvisorProps {
   open: boolean;
   onClose: () => void;
-  recommendationData?: any;
+  recommendationData?: SimulationResponse | null;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -360,7 +360,7 @@ export default function ChatAdvisor({ open, onClose, recommendationData }: ChatA
                     Counselling Advisor
                   </p>
                   <p className="text-[11px] text-neutral-500 leading-tight">
-                    Powered by GPT-4o-mini + RAG
+                    Powered by Gemini + RAG
                   </p>
                 </div>
               </div>

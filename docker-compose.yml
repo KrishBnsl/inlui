@@ -65,7 +65,7 @@ services:
     restart: unless-stopped
     environment:
       GOOGLE_API_KEY: ${GOOGLE_API_KEY}
-      RAG_LLM_MODEL: gemini-1.5-flash
+      RAG_LLM_MODEL: gemini-2.5-flash
       RAG_LLM_TEMPERATURE: "0.2"
       RAG_EMBED_MODEL: models/text-embedding-004
       RAG_TOP_K: "5"

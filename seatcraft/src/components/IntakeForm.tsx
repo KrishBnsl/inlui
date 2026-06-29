@@ -28,7 +28,7 @@ const GENDERS: { value: Gender; label: string }[] = [
 const LOADING_MESSAGES = [
   "Fetching historical cutoffs…",
   "Routing Home State quota allocations…",
-  "Running 10,000 rank iterations…",
+  "Running 1,000 rank iterations…",
   "Fitting volatility distributions…",
   "Building allotment probability matrix…",
   "Ranking predictions…",
@@ -59,7 +59,7 @@ export default function IntakeForm({ onSubmit, isLoading }: IntakeFormProps) {
     if (!val) return setAdvancedRankError("");
     const n = Number(val);
     if (isNaN(n) || n <= 0) return setAdvancedRankError("Enter a valid positive rank");
-    if (n > 15_000) return setAdvancedRankError("JEE Advanced ranks go up to ~15,000");
+    if (n > 50_000) return setAdvancedRankError("JEE Advanced rank must be 50,000 or below");
     setAdvancedRankError("");
   };
 
@@ -167,7 +167,7 @@ export default function IntakeForm({ onSubmit, isLoading }: IntakeFormProps) {
               onBlur={() => validateAdvancedRank(advancedRank)}
               placeholder="e.g. 420"
               min={1}
-              max={15000}
+              max={50000}
               className={inputClass(!!advancedRankError)}
             />
             {advancedRankError ? (

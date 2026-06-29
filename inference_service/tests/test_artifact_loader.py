@@ -64,13 +64,13 @@ class TestArtifactStore:
         missing = required - set(artifacts.universe.columns)
         assert not missing, f"Universe missing columns: {missing}"
 
-    def test_universe_only_2024_round5(self, artifacts):
-        """The universe should be filtered to 2024, Round 5."""
+    def test_universe_only_2024(self, artifacts):
+        """The universe should contain 2024 rows for request-level round filtering."""
         df = artifacts.universe
         if "year" in df.columns:
             assert (df["year"] == 2024).all(), "Universe contains rows outside 2024"
         if "round" in df.columns:
-            assert (df["round"] == 5).all(), "Universe contains rows outside Round 5"
+            assert df["round"].between(1, 6).all(), "Universe contains invalid rounds"
 
     def test_std_map_not_empty(self, artifacts):
         """The std_map must have at least one row."""

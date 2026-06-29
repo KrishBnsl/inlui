@@ -1,10 +1,12 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[allow(non_camel_case_types)]
 pub enum quota {
     HomeState,
     OtherState, //also called All India Quota (AIQ)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[allow(non_camel_case_types)]
 pub enum category {
     General,
     OBC,
@@ -18,9 +20,12 @@ pub enum category {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[allow(non_camel_case_types)]
 pub enum counselling {
     JoSAA,
+    #[allow(non_camel_case_types)]
     JAC_Delhi,
+    #[allow(non_camel_case_types)]
     JAC_Chandigarh,
     BITS,
     VITEEE,

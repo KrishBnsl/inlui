@@ -68,11 +68,6 @@ struct SimulateResponse {
     results: Vec<PredictionResult>,
 }
 
-#[derive(Debug, Serialize)]
-struct ErrorResponse {
-    error: String,
-}
-
 // ─── Shared application state ─────────────────────────────────────────────────
 
 struct AppState {
@@ -217,7 +212,7 @@ async fn simulate(
 
                         // Reconstruct historical data from the raw yearly_cutoffs on the asset
                         let asset = state.engine_josaa.matrix.find_by_key(&pred.key);
-                        let mut historical = asset
+                        let historical = asset
                             .map(|a| {
                                 let mut pts: Vec<HistoricalPoint> = a.yearly_cutoffs.iter()
                                     .map(|(yr, closing)| HistoricalPoint {

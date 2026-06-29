@@ -86,6 +86,8 @@ def filter_universe(
     pref_inst_types: list[str] | None,
     pref_branch_keywords: list[str] | None,
     advanced_rank: int | None,
+    home_state: str | None = None,
+    is_pwd: bool = False,
 ) -> pd.DataFrame:
     """
     Return the subset of the universe matching the student's profile.
@@ -106,13 +108,50 @@ def filter_universe(
         Optional branch keyword filter e.g. ["Computer Science"].
     advanced_rank : int | None
         If None, IIT rows are excluded (student has no JEE Advanced rank).
+    home_state : str | None
+        Student home state. HS rows are only included when the universe has
+        institute_state metadata that proves the row applies to the student.
+    is_pwd : bool
+        Whether to match PwD-specific rows.
 
     Returns
     -------
     pd.DataFrame
         Filtered subset (may be empty if no programs match).
     """
-    mask = (universe["category"] == category) & (universe["gender"] == gender)
+    available_rounds = sorted(universe["round"].dropna().unique())
+    effective_round = round_
+    if available_rounds and effective_round not in available_rounds:
+        earlier_or_equal = [r for r in available_rounds if r <= round_]
+        effective_round = earlier_or_equal[-1] if earlier_or_equal else available_rounds[-1]
+        logger.info(
+            "Requested round %s is unavailable; using round %s from loaded universe",
+            round_,
+            effective_round,
+        )
+
+    mask = (
+        (universe["category"] == category)
+        & (universe["gender"] == gender)
+        & (universe["round"] == effective_round)
+    )
+
+    if "is_pwd" in universe.columns:
+        mask = mask & (universe["is_pwd"] == is_pwd)
+
+    if "quota" in universe.columns:
+        quota = universe["quota"].astype(str).str.upper()
+        if "institute_state" in universe.columns and home_state:
+            institute_state = universe["institute_state"].astype(str).str.casefold()
+            home_state_norm = home_state.casefold()
+            mask = mask & (
+                (quota != "HS")
+                | ((quota == "HS") & (institute_state == home_state_norm))
+            )
+        else:
+            # Without institute-state metadata, HS rows may belong to any state.
+            # Keep AI/OS/global rows and avoid presenting unverifiable HS matches.
+            mask = mask & (quota != "HS")
 
     # Exclude IITs if no Advanced rank is provided
     if advanced_rank is None:

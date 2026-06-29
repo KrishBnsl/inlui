@@ -44,7 +44,7 @@ export async function uploadDocument(file: File): Promise<UploadResponse> {
 
 /**
  * Ask a question, optionally with an inline image (base64 JPEG/PNG).
- * The backend embeds the question, retrieves context, and calls GPT-4o-mini.
+ * The backend embeds the question, retrieves context, and calls Gemini.
  */
 export async function askQuestion(
   question: string,

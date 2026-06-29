@@ -6,8 +6,6 @@ seatcraft/src/lib/types.ts, with additional optional fields for
 ML-specific preferences.
 """
 
-from typing import Annotated
-
 from pydantic import BaseModel, Field
 
 
@@ -47,7 +45,10 @@ class PredictRequest(BaseModel):
     )
     home_state: str | None = Field(
         default=None,
-        description="Student's home state — used for HS vs AI quota routing.",
+        description=(
+            "Student's home state. Used for HS routing when the loaded universe "
+            "contains institute-state metadata."
+        ),
         examples=["Tamil Nadu"],
     )
     is_pwd: bool = Field(
@@ -74,10 +75,10 @@ class PredictRequest(BaseModel):
         examples=[["Computer Science"]],
     )
     round: int = Field(
-        default=6,
+        default=5,
         ge=1,
         le=6,
-        description="JoSAA counselling round to use as the universe baseline (default 6).",
+        description="JoSAA counselling round to use as the universe baseline (default 5).",
     )
     mc_enabled: bool = Field(
         default=True,

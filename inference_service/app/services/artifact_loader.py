@@ -7,7 +7,7 @@ request handler can access them without reloading.
 Loaded artifacts
 ----------------
 model           : sklearn estimator (unwrapped from dict wrapper if needed)
-prep_pipeline   : sklearn Pipeline  — transforms the 10-column feature DataFrame
+prep_pipeline   : sklearn Pipeline  — imputes and scales the feature DataFrame
 label_encoders  : dict              — categorical → integer mappings from label_encoders.json
 universe        : pd.DataFrame      — 2024 Round-6 rows from josaa_cleaned.csv (deduped)
 std_map         : pd.DataFrame      — residual std_dev per (institute_type_str, round)
@@ -64,9 +64,9 @@ def _load_model(artifacts_dir: Path) -> Any:
 
 
 def _load_prep_pipeline(artifacts_dir: Path) -> Any:
-    """Load the preprocessing pipeline used during training."""
-    pipeline_path = artifacts_dir / "preprocessing_pipeline.joblib"
-    logger.info(f"Loading preprocessing pipeline from {pipeline_path}")
+    """Load the scaled preprocessing pipeline used by the selected Ridge model."""
+    pipeline_path = artifacts_dir / "scaled_pipeline.joblib"
+    logger.info(f"Loading scaled preprocessing pipeline from {pipeline_path}")
     return joblib.load(pipeline_path)
 
 
@@ -80,17 +80,17 @@ def _load_label_encoders(artifacts_dir: Path) -> dict:
 
 def _load_universe(data_dir: Path) -> pd.DataFrame:
     """
-    Load the 2024 Round-5 universe of choices from feature_engineered.csv.
-    Deduplicates on (institute, program, category, gender, quota).
+    Load the 2024 universe of choices from feature_engineered.csv.
+    Deduplicates on (round, institute, program, category, gender, quota).
     """
     csv_path = data_dir / "features" / "feature_engineered.csv"
     logger.info(f"Loading universe from {csv_path} …")
     df = pd.read_csv(csv_path, low_memory=False)
 
-    # Filter to 2024 Round 5 only — this is the most recent final round
-    universe = df[(df["year"] == 2024) & (df["round"] == 5)].copy()
+    # Keep all 2024 rounds so the request-level round filter is meaningful.
+    universe = df[df["year"] == 2024].copy()
     universe = universe.drop_duplicates(
-        subset=["institute", "program", "category", "gender", "quota"]
+        subset=["round", "institute", "program", "category", "gender", "quota"]
     )
     universe = universe.reset_index(drop=True)
     logger.info(f"Universe loaded: {len(universe)} rows after dedup")
