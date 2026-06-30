@@ -93,7 +93,9 @@ pub fn fit_percentile_distribution(
 
 /// Same success rule as rank space: user wins when `user <= cutoff`.
 /// Uses an exponentially weighted moving average (decay factor = 0.6) to give priority to recent years.
-pub fn fit_cutoff_distribution_weighted(values: &[(u16, f64)]) -> Result<CutoffDistribution, DistributionError> {
+pub fn fit_cutoff_distribution_weighted(
+    values: &[(u16, f64)],
+) -> Result<CutoffDistribution, DistributionError> {
     if values.is_empty() {
         return Err(DistributionError::NotEnoughHistory);
     }
@@ -146,7 +148,9 @@ pub fn fit_cutoff_distribution_weighted(values: &[(u16, f64)]) -> Result<CutoffD
 }
 
 /// Unweighted version for simulated percentile outcomes.
-pub fn fit_cutoff_distribution_f64(values: &[f64]) -> Result<CutoffDistribution, DistributionError> {
+pub fn fit_cutoff_distribution_f64(
+    values: &[f64],
+) -> Result<CutoffDistribution, DistributionError> {
     if values.is_empty() {
         return Err(DistributionError::NotEnoughHistory);
     }

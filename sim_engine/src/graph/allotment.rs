@@ -6,7 +6,7 @@
 
 use std::collections::HashMap;
 
-use crate::enumerations::enums::counselling;
+use crate::enumerations::enums::Counselling;
 use crate::graph::def::{AdmissionGraph, CandidateId, CandidateNode, NodeId, SeatNode};
 
 /// Result of a single Gale–Shapley run.
@@ -23,7 +23,7 @@ pub struct AllotmentResult {
 pub struct AllotmentOptions {
     /// When empty, seats from any counselling are considered.
     /// Otherwise only seats whose `counselling` is in this list are used.
-    pub counsellings: Vec<counselling>,
+    pub counsellings: Vec<Counselling>,
 }
 
 impl AdmissionGraph {
@@ -46,11 +46,8 @@ pub fn gale_shapley(graph: &AdmissionGraph, options: AllotmentOptions) -> Allotm
     free.sort_by_key(|id| graph.candidate_nodes[id].rank);
 
     let mut occupants: HashMap<NodeId, Vec<CandidateId>> = HashMap::new();
-    let mut assignments: HashMap<CandidateId, Option<NodeId>> = expanded
-        .keys()
-        .copied()
-        .map(|id| (id, None))
-        .collect();
+    let mut assignments: HashMap<CandidateId, Option<NodeId>> =
+        expanded.keys().copied().map(|id| (id, None)).collect();
 
     while let Some(candidate_id) = free.pop() {
         let pref_list = match expanded.get(&candidate_id) {
@@ -167,7 +164,7 @@ fn is_eligible(candidate: &CandidateNode, seat: &SeatNode) -> bool {
     candidate.category == seat.category
 }
 
-fn counselling_allowed(seat: &SeatNode, allowed: &[counselling]) -> bool {
+fn counselling_allowed(seat: &SeatNode, allowed: &[Counselling]) -> bool {
     allowed.is_empty() || allowed.contains(&seat.counselling)
 }
 
@@ -175,7 +172,7 @@ fn counselling_allowed(seat: &SeatNode, allowed: &[counselling]) -> bool {
 mod tests {
     use super::*;
     use crate::enumerations::enums::{
-        category, counselling, quota, CseSpecialization, EngineeringBranch,
+        Category, Counselling, CseSpecialization, EngineeringBranch, Quota,
     };
     use crate::graph::def::{CandidateNode, SeatNode};
 
@@ -184,30 +181,26 @@ mod tests {
         insti: &str,
         branch: EngineeringBranch,
         capacity: u16,
-        cat: category,
+        cat: Category,
     ) -> SeatNode {
         SeatNode {
             id,
             insti: insti.into(),
             branch,
-            quota: quota::OtherState,
+            quota: Quota::OtherState,
             category: cat,
             max_seat_capacity: capacity,
             pred_closing_rank: 0,
-            counselling: counselling::JoSAA,
+            counselling: Counselling::JoSAA,
         }
     }
 
-    fn candidate(
-        id: CandidateId,
-        rank: u32,
-        prefs: Vec<(&str, &str)>,
-    ) -> CandidateNode {
+    fn candidate(id: CandidateId, rank: u32, prefs: Vec<(&str, &str)>) -> CandidateNode {
         CandidateNode {
             id,
             name: format!("c{id}"),
             rank,
-            category: category::General,
+            category: Category::General,
             homestate: crate::enumerations::enums::IndianState::Delhi,
             preferences: prefs
                 .into_iter()
@@ -227,7 +220,7 @@ mod tests {
                     "IIT-A",
                     EngineeringBranch::ComputerScience(CseSpecialization::Core),
                     1,
-                    category::General,
+                    Category::General,
                 ),
             )]),
             candidate_nodes: HashMap::from([
@@ -253,7 +246,7 @@ mod tests {
                         "IIT-A",
                         EngineeringBranch::ComputerScience(CseSpecialization::Core),
                         1,
-                        category::General,
+                        Category::General,
                     ),
                 ),
                 (
@@ -263,12 +256,15 @@ mod tests {
                         "IIT-B",
                         EngineeringBranch::ComputerScience(CseSpecialization::Core),
                         1,
-                        category::General,
+                        Category::General,
                     ),
                 ),
             ]),
             candidate_nodes: HashMap::from([
-                (1, candidate(1, 20, vec![("IIT-A", "CSE"), ("IIT-B", "CSE")])),
+                (
+                    1,
+                    candidate(1, 20, vec![("IIT-A", "CSE"), ("IIT-B", "CSE")]),
+                ),
                 (2, candidate(2, 10, vec![("IIT-A", "CSE")])),
             ]),
             edges: HashMap::new(),

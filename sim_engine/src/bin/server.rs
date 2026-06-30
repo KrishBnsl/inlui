@@ -3,14 +3,18 @@
 //! POST /api/simulate  →  SimulateRequest  →  SimulateResponse
 //! GET  /api/health    →  200 OK
 
-use std::{collections::{HashMap, HashSet}, env, sync::Arc};
+use std::{
+    collections::{HashMap, HashSet},
+    env,
+    sync::Arc,
+};
 
 use axum::{
+    Json, Router,
     extract::State,
     http::{HeaderValue, Method, StatusCode},
     response::IntoResponse,
     routing::{get, post},
-    Json, Router,
 };
 use dotenvy::dotenv;
 use serde::{Deserialize, Serialize};
@@ -18,13 +22,13 @@ use sqlx::postgres::PgPoolOptions;
 use tower_http::cors::{Any, CorsLayer};
 use tracing::info;
 
+use sim_engine::enumerations::enums::{Category, IndianState, Quota};
 use sim_engine::predictor::{
     db,
     engine::PredictorEngine,
     normalization::{CohortRegistry, ExamCohort},
     quota_matrix::{HorizontalFlags, UserProfile},
 };
-use sim_engine::enumerations::enums::{category, quota, IndianState};
 
 // ─── JSON Request/Response types (mirrors the TypeScript frontend types) ──────
 
@@ -71,94 +75,153 @@ struct SimulateResponse {
 // ─── Shared application state ─────────────────────────────────────────────────
 
 struct AppState {
-    engine_josaa: PredictorEngine,  // JoSAA engine (NITs, IIITs, GFTIs via JEE Main)
-    engine_iit: PredictorEngine,    // JoSAA IIT engine (via JEE Advanced)
+    engine_josaa: PredictorEngine, // JoSAA engine (NITs, IIITs, GFTIs via JEE Main)
+    engine_iit: PredictorEngine,   // JoSAA IIT engine (via JEE Advanced)
 }
 
 // ─── Parse helpers ────────────────────────────────────────────────────────────
 
-fn parse_category(s: &str) -> category {
+fn parse_category(s: &str) -> Category {
     match s {
-        "OBC-NCL" | "OBC" => category::OBC,
-        "SC"               => category::SC,
-        "ST"               => category::ST,
-        "EWS"              => category::EWS,
-        _                  => category::General, // "OPEN"
+        "OBC-NCL" | "OBC" => Category::OBC,
+        "SC" => Category::SC,
+        "ST" => Category::ST,
+        "EWS" => Category::EWS,
+        _ => Category::General, // "OPEN"
     }
 }
 
 fn parse_state(s: &str) -> Option<IndianState> {
     match s {
-        "Andhra Pradesh"       => Some(IndianState::AndhraPradesh),
-        "Arunachal Pradesh"    => Some(IndianState::ArunachalPradesh),
-        "Assam"                => Some(IndianState::Assam),
-        "Bihar"                => Some(IndianState::Bihar),
-        "Chhattisgarh"         => Some(IndianState::Chhattisgarh),
-        "Goa"                  => Some(IndianState::Goa),
-        "Gujarat"              => Some(IndianState::Gujarat),
-        "Haryana"              => Some(IndianState::Haryana),
-        "Himachal Pradesh"     => Some(IndianState::HimachalPradesh),
-        "Jharkhand"            => Some(IndianState::Jharkhand),
-        "Karnataka"            => Some(IndianState::Karnataka),
-        "Kerala"               => Some(IndianState::Kerala),
-        "Madhya Pradesh"       => Some(IndianState::MadhyaPradesh),
-        "Maharashtra"          => Some(IndianState::Maharashtra),
-        "Manipur"              => Some(IndianState::Manipur),
-        "Meghalaya"            => Some(IndianState::Meghalaya),
-        "Mizoram"              => Some(IndianState::Mizoram),
-        "Nagaland"             => Some(IndianState::Nagaland),
-        "Odisha"               => Some(IndianState::Odisha),
-        "Punjab"               => Some(IndianState::Punjab),
-        "Rajasthan"            => Some(IndianState::Rajasthan),
-        "Sikkim"               => Some(IndianState::Sikkim),
-        "Tamil Nadu"           => Some(IndianState::TamilNadu),
-        "Telangana"            => Some(IndianState::Telangana),
-        "Tripura"              => Some(IndianState::Tripura),
-        "Uttar Pradesh"        => Some(IndianState::UttarPradesh),
-        "Uttarakhand"          => Some(IndianState::Uttarakhand),
-        "West Bengal"          => Some(IndianState::WestBengal),
-        "Delhi"                => Some(IndianState::Delhi),
-        "Chandigarh"           => Some(IndianState::Chandigarh),
-        _                      => None,
+        "Andhra Pradesh" => Some(IndianState::AndhraPradesh),
+        "Arunachal Pradesh" => Some(IndianState::ArunachalPradesh),
+        "Assam" => Some(IndianState::Assam),
+        "Bihar" => Some(IndianState::Bihar),
+        "Chhattisgarh" => Some(IndianState::Chhattisgarh),
+        "Goa" => Some(IndianState::Goa),
+        "Gujarat" => Some(IndianState::Gujarat),
+        "Haryana" => Some(IndianState::Haryana),
+        "Himachal Pradesh" => Some(IndianState::HimachalPradesh),
+        "Jharkhand" => Some(IndianState::Jharkhand),
+        "Karnataka" => Some(IndianState::Karnataka),
+        "Kerala" => Some(IndianState::Kerala),
+        "Madhya Pradesh" => Some(IndianState::MadhyaPradesh),
+        "Maharashtra" => Some(IndianState::Maharashtra),
+        "Manipur" => Some(IndianState::Manipur),
+        "Meghalaya" => Some(IndianState::Meghalaya),
+        "Mizoram" => Some(IndianState::Mizoram),
+        "Nagaland" => Some(IndianState::Nagaland),
+        "Odisha" => Some(IndianState::Odisha),
+        "Punjab" => Some(IndianState::Punjab),
+        "Rajasthan" => Some(IndianState::Rajasthan),
+        "Sikkim" => Some(IndianState::Sikkim),
+        "Tamil Nadu" => Some(IndianState::TamilNadu),
+        "Telangana" => Some(IndianState::Telangana),
+        "Tripura" => Some(IndianState::Tripura),
+        "Uttar Pradesh" => Some(IndianState::UttarPradesh),
+        "Uttarakhand" => Some(IndianState::Uttarakhand),
+        "West Bengal" => Some(IndianState::WestBengal),
+        "Delhi" => Some(IndianState::Delhi),
+        "Chandigarh" => Some(IndianState::Chandigarh),
+        _ => None,
     }
 }
 
 /// Map institute type string from DB to display name.
 fn institute_type_label(name: &str) -> &'static str {
     let n = name.to_ascii_uppercase();
-    if n.contains("INDIAN INSTITUTE OF TECHNOLOGY") { "IIT" }
-    else if n.contains("NATIONAL INSTITUTE OF TECHNOLOGY") { "NIT" }
-    else if n.contains("INDIAN INSTITUTE OF INFORMATION TECHNOLOGY") { "IIIT" }
-    else { "GFTI" }
+    if n.contains("INDIAN INSTITUTE OF TECHNOLOGY") {
+        "IIT"
+    } else if n.contains("NATIONAL INSTITUTE OF TECHNOLOGY") {
+        "NIT"
+    } else if n.contains("INDIAN INSTITUTE OF INFORMATION TECHNOLOGY") {
+        "IIIT"
+    } else {
+        "GFTI"
+    }
 }
 
 // ─── JEE cohort registry (candidate pool sizes by year) ──────────────────────
 
 fn jee_main_cohorts() -> CohortRegistry {
     CohortRegistry::new([
-        ExamCohort { year: 2018, total_candidates: 1_043_739 },
-        ExamCohort { year: 2019, total_candidates: 1_041_804 },
-        ExamCohort { year: 2020, total_candidates:   858_273 },
-        ExamCohort { year: 2021, total_candidates: 1_114_000 },
-        ExamCohort { year: 2022, total_candidates: 1_048_012 },
-        ExamCohort { year: 2023, total_candidates: 1_145_000 },
-        ExamCohort { year: 2024, total_candidates: 1_180_000 },
-        ExamCohort { year: 2025, total_candidates: 1_200_000 }, // projection
-        ExamCohort { year: 2026, total_candidates: 1_250_000 }, // target year
+        ExamCohort {
+            year: 2018,
+            total_candidates: 1_043_739,
+        },
+        ExamCohort {
+            year: 2019,
+            total_candidates: 1_041_804,
+        },
+        ExamCohort {
+            year: 2020,
+            total_candidates: 858_273,
+        },
+        ExamCohort {
+            year: 2021,
+            total_candidates: 1_114_000,
+        },
+        ExamCohort {
+            year: 2022,
+            total_candidates: 1_048_012,
+        },
+        ExamCohort {
+            year: 2023,
+            total_candidates: 1_145_000,
+        },
+        ExamCohort {
+            year: 2024,
+            total_candidates: 1_180_000,
+        },
+        ExamCohort {
+            year: 2025,
+            total_candidates: 1_200_000,
+        }, // projection
+        ExamCohort {
+            year: 2026,
+            total_candidates: 1_250_000,
+        }, // target year
     ])
 }
 
 fn jee_advanced_cohorts() -> CohortRegistry {
     CohortRegistry::new([
-        ExamCohort { year: 2018, total_candidates: 155_158 },
-        ExamCohort { year: 2019, total_candidates: 161_319 },
-        ExamCohort { year: 2020, total_candidates: 150_838 },
-        ExamCohort { year: 2021, total_candidates: 141_699 },
-        ExamCohort { year: 2022, total_candidates: 155_538 },
-        ExamCohort { year: 2023, total_candidates: 189_744 },
-        ExamCohort { year: 2024, total_candidates: 180_200 },
-        ExamCohort { year: 2025, total_candidates: 185_000 }, // projection
-        ExamCohort { year: 2026, total_candidates: 190_000 }, // target year
+        ExamCohort {
+            year: 2018,
+            total_candidates: 155_158,
+        },
+        ExamCohort {
+            year: 2019,
+            total_candidates: 161_319,
+        },
+        ExamCohort {
+            year: 2020,
+            total_candidates: 150_838,
+        },
+        ExamCohort {
+            year: 2021,
+            total_candidates: 141_699,
+        },
+        ExamCohort {
+            year: 2022,
+            total_candidates: 155_538,
+        },
+        ExamCohort {
+            year: 2023,
+            total_candidates: 189_744,
+        },
+        ExamCohort {
+            year: 2024,
+            total_candidates: 180_200,
+        },
+        ExamCohort {
+            year: 2025,
+            total_candidates: 185_000,
+        }, // projection
+        ExamCohort {
+            year: 2026,
+            total_candidates: 190_000,
+        }, // target year
     ])
 }
 
@@ -168,13 +231,10 @@ async fn health() -> impl IntoResponse {
     (StatusCode::OK, "ok")
 }
 
-
-
 async fn simulate(
     State(state): State<Arc<AppState>>,
     Json(req): Json<SimulateRequest>,
 ) -> impl IntoResponse {
-
     let cat = parse_category(&req.category);
     let homestate = match parse_state(&req.home_state) {
         Some(s) => s,
@@ -182,7 +242,8 @@ async fn simulate(
             return (
                 StatusCode::BAD_REQUEST,
                 Json(serde_json::json!({ "error": format!("Unknown state: {}", req.home_state) })),
-            ).into_response();
+            )
+                .into_response();
         }
     };
     let is_female = req.gender.contains("Female") || req.gender.contains("female");
@@ -200,21 +261,28 @@ async fn simulate(
         // A student competes for HS quota in their home state, AI for everything else.
         // We run predict_for_user twice — once with HS profile, once with AI profile —
         // the engine's routing layer will return only assets that match each profile.
-        for q in [quota::HomeState, quota::OtherState] {
-            let user = UserProfile { category: cat, quota: q, homestate, horizontal };
+        for q in [Quota::HomeState, Quota::OtherState] {
+            let user = UserProfile {
+                category: cat,
+                quota: q,
+                homestate,
+                horizontal,
+            };
             match state.engine_josaa.predict_for_user(&user, req.main_rank) {
                 Ok(predictions) => {
                     for pred in predictions {
                         let quota_label = match q {
-                            quota::HomeState  => "HS",
-                            quota::OtherState => "AI",
+                            Quota::HomeState => "HS",
+                            Quota::OtherState => "AI",
                         };
 
                         // Reconstruct historical data from the raw yearly_cutoffs on the asset
                         let asset = state.engine_josaa.matrix.find_by_key(&pred.key);
                         let historical = asset
                             .map(|a| {
-                                let mut pts: Vec<HistoricalPoint> = a.yearly_cutoffs.iter()
+                                let mut pts: Vec<HistoricalPoint> = a
+                                    .yearly_cutoffs
+                                    .iter()
                                     .map(|(yr, closing)| HistoricalPoint {
                                         year: *yr,
                                         opening_rank: closing.saturating_sub(closing / 5), // approx
@@ -228,20 +296,28 @@ async fn simulate(
 
                         // Use a stable unique key for dedup: institute + branch + quota + gender flag
                         let gender_tag = if horizontal.female { "F" } else { "N" };
-                        let dedup_key = format!("{}-{}-{}-{}", pred.key.institute, pred.key.branch, quota_label, gender_tag);
+                        let dedup_key = format!(
+                            "{}-{}-{}-{}",
+                            pred.key.institute, pred.key.branch, quota_label, gender_tag
+                        );
 
-                        all_results.push((dedup_key, PredictionResult {
-                            id: String::new(), // filled after dedup
-                            institute_type: institute_type_label(&pred.key.institute).to_string(),
-                            institute_name: pred.key.institute.clone(),
-                            program_name: pred.key.branch.clone(),
-                            quota_applied: quota_label.to_string(),
-                            category: req.category.clone(),
-                            probability_percent: (pred.probability_percent * 10.0).round() / 10.0,
-                            projected_closing_rank: pred.projected_cutoff_rank,
-                            uses_cold_start_proxy: pred.uses_cold_start_proxy,
-                            historical_data: historical,
-                        }));
+                        all_results.push((
+                            dedup_key,
+                            PredictionResult {
+                                id: String::new(), // filled after dedup
+                                institute_type: institute_type_label(&pred.key.institute)
+                                    .to_string(),
+                                institute_name: pred.key.institute.clone(),
+                                program_name: pred.key.branch.clone(),
+                                quota_applied: quota_label.to_string(),
+                                category: req.category.clone(),
+                                probability_percent: (pred.probability_percent * 10.0).round()
+                                    / 10.0,
+                                projected_closing_rank: pred.projected_cutoff_rank,
+                                uses_cold_start_proxy: pred.uses_cold_start_proxy,
+                                historical_data: historical,
+                            },
+                        ));
                     }
                 }
                 Err(e) => {
@@ -255,7 +331,7 @@ async fn simulate(
     if let Some(adv_rank) = req.advanced_rank {
         let user = UserProfile {
             category: cat,
-            quota: quota::OtherState, // IITs are all-India only
+            quota: Quota::OtherState, // IITs are all-India only
             homestate,
             horizontal,
         };
@@ -265,7 +341,9 @@ async fn simulate(
                     let asset = state.engine_iit.matrix.find_by_key(&pred.key);
                     let historical = asset
                         .map(|a| {
-                            let mut pts: Vec<HistoricalPoint> = a.yearly_cutoffs.iter()
+                            let mut pts: Vec<HistoricalPoint> = a
+                                .yearly_cutoffs
+                                .iter()
                                 .map(|(yr, closing)| HistoricalPoint {
                                     year: *yr,
                                     opening_rank: closing.saturating_sub(closing / 5),
@@ -278,20 +356,26 @@ async fn simulate(
                         .unwrap_or_default();
 
                     let gender_tag = if horizontal.female { "F" } else { "N" };
-                    let dedup_key = format!("{}-{}-AI-{}", pred.key.institute, pred.key.branch, gender_tag);
+                    let dedup_key = format!(
+                        "{}-{}-AI-{}",
+                        pred.key.institute, pred.key.branch, gender_tag
+                    );
 
-                    all_results.push((dedup_key, PredictionResult {
-                        id: String::new(),
-                        institute_type: "IIT".to_string(),
-                        institute_name: pred.key.institute.clone(),
-                        program_name: pred.key.branch.clone(),
-                        quota_applied: "AI".to_string(),
-                        category: req.category.clone(),
-                        probability_percent: (pred.probability_percent * 10.0).round() / 10.0,
-                        projected_closing_rank: pred.projected_cutoff_rank,
-                        uses_cold_start_proxy: pred.uses_cold_start_proxy,
-                        historical_data: historical,
-                    }));
+                    all_results.push((
+                        dedup_key,
+                        PredictionResult {
+                            id: String::new(),
+                            institute_type: "IIT".to_string(),
+                            institute_name: pred.key.institute.clone(),
+                            program_name: pred.key.branch.clone(),
+                            quota_applied: "AI".to_string(),
+                            category: req.category.clone(),
+                            probability_percent: (pred.probability_percent * 10.0).round() / 10.0,
+                            projected_closing_rank: pred.projected_cutoff_rank,
+                            uses_cold_start_proxy: pred.uses_cold_start_proxy,
+                            historical_data: historical,
+                        },
+                    ));
                 }
             }
             Err(e) => {
@@ -304,9 +388,11 @@ async fn simulate(
     let mut seen: HashSet<String> = HashSet::new();
     let mut unique: Vec<PredictionResult> = all_results
         .into_iter()
-        .filter_map(|(key, result)| {
-            if seen.insert(key) { Some(result) } else { None }
-        })
+        .filter_map(
+            |(key, result)| {
+                if seen.insert(key) { Some(result) } else { None }
+            },
+        )
         .collect();
 
     // Sort by probability descending
@@ -320,12 +406,21 @@ async fn simulate(
     let all_results: Vec<PredictionResult> = unique
         .into_iter()
         .enumerate()
-        .map(|(i, mut r)| { r.id = i.to_string(); r })
+        .map(|(i, mut r)| {
+            r.id = i.to_string();
+            r
+        })
         .collect();
     let total = all_results.len();
-    let safest = all_results.first().map(|r| r.institute_name.clone()).unwrap_or_default();
+    let safest = all_results
+        .first()
+        .map(|r| r.institute_name.clone())
+        .unwrap_or_default();
     let upgrade_idx = (total as f64 * 0.33) as usize;
-    let upgrade = all_results.get(upgrade_idx).map(|r| r.institute_name.clone()).unwrap_or_default();
+    let upgrade = all_results
+        .get(upgrade_idx)
+        .map(|r| r.institute_name.clone())
+        .unwrap_or_default();
 
     let response = SimulateResponse {
         total_options: total,
@@ -362,8 +457,13 @@ async fn main() {
 
     info!("Building JoSAA engine (NITs/IIITs/GFTIs)…");
     // JoSAA engine covers NITs, IIITs, GFTIs, and non-IIT institutes
-    let josaa_rows: Vec<_> = all_rows.iter()
-        .filter(|r| !r.institute_name.to_uppercase().contains("INDIAN INSTITUTE OF TECHNOLOGY"))
+    let josaa_rows: Vec<_> = all_rows
+        .iter()
+        .filter(|r| {
+            !r.institute_name
+                .to_uppercase()
+                .contains("INDIAN INSTITUTE OF TECHNOLOGY")
+        })
         .cloned()
         .collect();
     let engine_josaa = PredictorEngine::from_rows(
@@ -376,8 +476,13 @@ async fn main() {
 
     info!("Building IIT engine (JEE Advanced)…");
     // IIT engine covers only IIT rows — smaller matrix, faster routing
-    let iit_rows: Vec<_> = all_rows.into_iter()
-        .filter(|r| r.institute_name.to_uppercase().contains("INDIAN INSTITUTE OF TECHNOLOGY"))
+    let iit_rows: Vec<_> = all_rows
+        .into_iter()
+        .filter(|r| {
+            r.institute_name
+                .to_uppercase()
+                .contains("INDIAN INSTITUTE OF TECHNOLOGY")
+        })
         .collect();
     let engine_iit = PredictorEngine::from_rows(
         iit_rows,
@@ -387,8 +492,10 @@ async fn main() {
         HashMap::new(),
     );
 
-
-    let state = Arc::new(AppState { engine_josaa, engine_iit });
+    let state = Arc::new(AppState {
+        engine_josaa,
+        engine_iit,
+    });
 
     let cors = CorsLayer::new()
         .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())

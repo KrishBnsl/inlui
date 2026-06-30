@@ -1,15 +1,15 @@
 //! Each quota intersection is an isolated simulatable asset; route by user profile.
 
-use crate::enumerations::enums::{category, counselling, quota, IndianState};
+use crate::enumerations::enums::{Category, Counselling, IndianState, Quota};
 
 /// Unique key for one legal seat pool, e.g. `DTU_CSE_DelhiRegion_OBC`.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct QuotaAssetKey {
     pub institute: String,
     pub branch: String,
-    pub quota: quota,
-    pub category: category,
-    pub counselling: counselling,
+    pub quota: Quota,
+    pub category: Category,
+    pub counselling: Counselling,
 }
 
 /// Horizontal tags layered on vertical category (Female, Defence, PwD, etc.).
@@ -23,8 +23,8 @@ pub struct HorizontalFlags {
 /// Student profile used by the routing layer.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct UserProfile {
-    pub category: category,
-    pub quota: quota,
+    pub category: Category,
+    pub quota: Quota,
     pub homestate: IndianState,
     pub horizontal: HorizontalFlags,
 }
@@ -33,7 +33,7 @@ pub struct UserProfile {
 #[derive(Debug, Clone)]
 pub struct QuotaAsset {
     pub key: QuotaAssetKey,
-    /// Required for `quota::HomeState` matching (e.g. Delhi for DTU Delhi region).
+    /// Required for `Quota::HomeState` matching (e.g. Delhi for DTU Delhi region).
     pub institute_home_state: Option<IndianState>,
     /// If set, asset only applies when user carries these horizontal flags.
     pub required_horizontal: HorizontalFlags,
@@ -49,37 +49,37 @@ pub struct QuotaMatrix {
 impl QuotaMatrix {
     pub fn from_db_rows(rows: Vec<crate::predictor::db::HistoricalCutoff>) -> Self {
         use std::collections::HashMap;
-        
+
         let mut grouped: HashMap<QuotaAssetKey, QuotaAsset> = HashMap::new();
-        
+
         for row in rows {
             let quota_val = match row.quota.as_str() {
-                "HomeState" | "HS" => quota::HomeState,
-                "OtherState" | "OS" | "AI" | "AIQ" => quota::OtherState,
-                _ => quota::OtherState,
+                "HomeState" | "HS" => Quota::HomeState,
+                "OtherState" | "OS" | "AI" | "AIQ" => Quota::OtherState,
+                _ => Quota::OtherState,
             };
-            
+
             let category_val = match row.category.as_str() {
-                "General" | "OPEN" => category::General,
-                "OBC" | "OBC-NCL" => category::OBC,
-                "SC" => category::SC,
-                "ST" => category::ST,
-                "EWS" => category::EWS,
-                "GirlChild" => category::GirlChild,
-                "KashmiriMigrant" => category::KashmiriMigrant,
-                "PwD" => category::PwD,
-                "Defence" | "DS" => category::Defence,
-                _ => category::General,
+                "General" | "OPEN" => Category::General,
+                "OBC" | "OBC-NCL" => Category::OBC,
+                "SC" => Category::SC,
+                "ST" => Category::ST,
+                "EWS" => Category::EWS,
+                "GirlChild" => Category::GirlChild,
+                "KashmiriMigrant" => Category::KashmiriMigrant,
+                "PwD" => Category::PwD,
+                "Defence" | "DS" => Category::Defence,
+                _ => Category::General,
             };
-            
+
             let key = QuotaAssetKey {
                 institute: row.institute_name.clone(),
                 branch: row.program_name.clone(),
                 quota: quota_val,
                 category: category_val,
-                counselling: counselling::JoSAA,
+                counselling: Counselling::JoSAA,
             };
-            
+
             let asset = grouped.entry(key.clone()).or_insert_with(|| QuotaAsset {
                 key,
                 institute_home_state: parse_state(&row.state),
@@ -90,10 +90,12 @@ impl QuotaMatrix {
                 },
                 yearly_cutoffs: Vec::new(),
             });
-            
-            asset.yearly_cutoffs.push((row.year as u16, row.closing_rank as u32));
+
+            asset
+                .yearly_cutoffs
+                .push((row.year as u16, row.closing_rank as u32));
         }
-        
+
         Self {
             assets: grouped.into_values().collect(),
         }
@@ -160,13 +162,13 @@ pub fn is_eligible(user: &UserProfile, asset: &QuotaAsset) -> bool {
         return false;
     }
     match asset.key.quota {
-        quota::HomeState => {
+        Quota::HomeState => {
             let Some(home) = asset.institute_home_state else {
                 return false;
             };
             user.homestate == home
         }
-        quota::OtherState => true,
+        Quota::OtherState => true,
     }
 }
 
@@ -179,16 +181,14 @@ fn horizontal_satisfied(user: HorizontalFlags, required: HorizontalFlags) -> boo
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::enumerations::enums::category;
-
     fn dtu_obc_delhi_asset() -> QuotaAsset {
         QuotaAsset {
             key: QuotaAssetKey {
                 institute: "DTU".into(),
                 branch: "CSE".into(),
-                quota: quota::HomeState,
-                category: category::OBC,
-                counselling: counselling::JAC_Delhi,
+                quota: Quota::HomeState,
+                category: Category::OBC,
+                counselling: Counselling::JacDelhi,
             },
             institute_home_state: Some(IndianState::Delhi),
             required_horizontal: HorizontalFlags::default(),
@@ -202,8 +202,8 @@ mod tests {
             assets: vec![dtu_obc_delhi_asset()],
         };
         let delhi_obc = UserProfile {
-            category: category::OBC,
-            quota: quota::HomeState,
+            category: Category::OBC,
+            quota: Quota::HomeState,
             homestate: IndianState::Delhi,
             horizontal: HorizontalFlags::default(),
         };

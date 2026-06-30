@@ -1,7 +1,7 @@
 use csv::ReaderBuilder;
 use dotenvy::dotenv;
 use serde::Deserialize;
-use sqlx::{postgres::PgPoolOptions, PgPool};
+use sqlx::{PgPool, postgres::PgPoolOptions};
 use std::{collections::HashMap, env, error::Error, fs::File};
 
 #[derive(Debug, Deserialize)]
@@ -54,7 +54,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         let record: CsvRow = result?;
 
         // Skip rows with no rank data (supernumerary / preparatory seats)
-        let (Some(opening_rank), Some(closing_rank)) = (record.opening_rank, record.closing_rank) else {
+        let (Some(opening_rank), Some(closing_rank)) = (record.opening_rank, record.closing_rank)
+        else {
             continue;
         };
 
@@ -64,9 +65,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
         } else {
             let inst_type = if record.institute.contains("Indian Institute of Technology") {
                 "IIT"
-            } else if record.institute.contains("National Institute of Technology") {
+            } else if record
+                .institute
+                .contains("National Institute of Technology")
+            {
                 "NIT"
-            } else if record.institute.contains("Indian Institute of Information Technology") {
+            } else if record
+                .institute
+                .contains("Indian Institute of Information Technology")
+            {
                 "IIIT"
             } else {
                 "GFTI"
@@ -85,7 +92,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             .bind(inst_type)
             .fetch_one(&pool)
             .await?;
-            
+
             inst_code_counter += 1;
             inst_cache.insert(record.institute.clone(), row.0);
             row.0
@@ -145,7 +152,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         // Normalise quota: CSV uses "AI", "HS", "OS", "AP", "JK", "LA" etc.
         let quota_norm = match record.quota.as_str() {
             "HS" => "HS",
-            _    => "AI",   // AI / OS / AP / JK / LA all treated as All-India
+            _ => "AI", // AI / OS / AP / JK / LA all treated as All-India
         };
 
         // Insert into josaa_cutoffs
@@ -184,9 +191,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
 async fn setup_database(pool: &PgPool) -> Result<(), Box<dyn Error>> {
     // Drop and recreate so re-runs are always clean
-    sqlx::query("DROP TABLE IF EXISTS josaa_cutoffs CASCADE").execute(pool).await?;
-    sqlx::query("DROP TABLE IF EXISTS programs CASCADE").execute(pool).await?;
-    sqlx::query("DROP TABLE IF EXISTS institutes CASCADE").execute(pool).await?;
+    sqlx::query("DROP TABLE IF EXISTS josaa_cutoffs CASCADE")
+        .execute(pool)
+        .await?;
+    sqlx::query("DROP TABLE IF EXISTS programs CASCADE")
+        .execute(pool)
+        .await?;
+    sqlx::query("DROP TABLE IF EXISTS institutes CASCADE")
+        .execute(pool)
+        .await?;
 
     sqlx::query(
         r#"

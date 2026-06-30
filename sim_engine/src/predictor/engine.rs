@@ -2,10 +2,10 @@
 
 use std::collections::HashMap;
 
-use super::cold_start::{distribution_from_proxy, ColdStartProxy};
+use super::cold_start::{ColdStartProxy, distribution_from_proxy};
 use super::cutoff_mc::{
-    adjusted_distribution, run_monte_carlo_on_values, CutoffDistribution, DistributionError,
-    SeatCapacityAdjustment,
+    CutoffDistribution, DistributionError, SeatCapacityAdjustment, adjusted_distribution,
+    run_monte_carlo_on_values,
 };
 use super::normalization::{self, CohortRegistry};
 use super::quota_matrix::{QuotaAsset, QuotaAssetKey, QuotaMatrix, UserProfile};
@@ -50,7 +50,13 @@ impl PredictorEngine {
         cold_start: HashMap<QuotaAssetKey, ColdStartProxy>,
     ) -> Result<Self, sqlx::Error> {
         let rows = crate::predictor::db::fetch_cutoffs_for_simulation(pool).await?;
-        Ok(Self::from_rows(rows, target_year, target_year_total, cohorts, cold_start))
+        Ok(Self::from_rows(
+            rows,
+            target_year,
+            target_year_total,
+            cohorts,
+            cold_start,
+        ))
     }
 
     /// Build an engine from pre-fetched DB rows (avoids a second round-trip when two engines share the same data).
@@ -85,20 +91,16 @@ impl PredictorEngine {
             return Err(DistributionError::NoEligibleAssets);
         }
 
-        let user_percentile = normalization::rank_to_percentile(
-            user_rank,
-            self.config.target_year_total,
-        );
+        let user_percentile =
+            normalization::rank_to_percentile(user_rank, self.config.target_year_total);
 
         let predictions: Vec<QuotaAssetPrediction> = routed
             .iter()
-            .filter_map(|asset| {
-                match self.predict_asset(asset, user_percentile) {
-                    Ok(p) => Some(p),
-                    Err(e) => {
-                        tracing::debug!("Failed to predict asset {:?}: {:?}", asset.key, e);
-                        None
-                    }
+            .filter_map(|asset| match self.predict_asset(asset, user_percentile) {
+                Ok(p) => Some(p),
+                Err(e) => {
+                    tracing::debug!("Failed to predict asset {:?}: {:?}", asset.key, e);
+                    None
                 }
             })
             .collect();
@@ -119,16 +121,11 @@ impl PredictorEngine {
             self.resolve_distribution(asset)?;
 
         let dist = adjusted_distribution(distribution, self.config.seat_adjustment);
-        let probability_percent = run_monte_carlo_on_values(
-            user_percentile,
-            dist,
-            self.config.iterations,
-        )?;
+        let probability_percent =
+            run_monte_carlo_on_values(user_percentile, dist, self.config.iterations)?;
 
-        let projected_cutoff_rank = normalization::percentile_to_rank(
-            dist.mean,
-            self.config.target_year_total,
-        );
+        let projected_cutoff_rank =
+            normalization::percentile_to_rank(dist.mean, self.config.target_year_total);
 
         Ok(QuotaAssetPrediction {
             key: asset.key.clone(),
@@ -166,11 +163,8 @@ impl PredictorEngine {
             return Err(DistributionError::ProxyHasNoHistory);
         }
 
-        let dist = distribution_from_proxy(
-            &proxy_asset.yearly_cutoffs,
-            &self.config.cohorts,
-            proxy,
-        )?;
+        let dist =
+            distribution_from_proxy(&proxy_asset.yearly_cutoffs, &self.config.cohorts, proxy)?;
         Ok((dist, true, true))
     }
 }
@@ -178,7 +172,7 @@ impl PredictorEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::enumerations::enums::{category, counselling, quota};
+    use crate::enumerations::enums::{Category, Counselling, Quota};
     use crate::predictor::normalization::ExamCohort;
 
     fn cohorts() -> CohortRegistry {
@@ -211,18 +205,13 @@ mod tests {
             key: QuotaAssetKey {
                 institute: "DTU".into(),
                 branch: "CSE".into(),
-                quota: quota::HomeState,
-                category: category::General,
-                counselling: counselling::JAC_Delhi,
+                quota: Quota::HomeState,
+                category: Category::General,
+                counselling: Counselling::JacDelhi,
             },
             institute_home_state: Some(crate::enumerations::enums::IndianState::Delhi),
             required_horizontal: Default::default(),
-            yearly_cutoffs: vec![
-                (2022, 4_800),
-                (2023, 5_100),
-                (2024, 4_950),
-                (2025, 5_300),
-            ],
+            yearly_cutoffs: vec![(2022, 4_800), (2023, 5_100), (2024, 4_950), (2025, 5_300)],
         }
     }
 
@@ -246,8 +235,8 @@ mod tests {
     fn engine_routes_and_returns_prediction() {
         let engine = engine_with(dtu_cse_gen_delhi());
         let user = UserProfile {
-            category: category::General,
-            quota: quota::HomeState,
+            category: Category::General,
+            quota: Quota::HomeState,
             homestate: crate::enumerations::enums::IndianState::Delhi,
             horizontal: Default::default(),
         };
@@ -284,8 +273,8 @@ mod tests {
         );
 
         let user = UserProfile {
-            category: category::General,
-            quota: quota::HomeState,
+            category: Category::General,
+            quota: Quota::HomeState,
             homestate: crate::enumerations::enums::IndianState::Delhi,
             horizontal: Default::default(),
         };

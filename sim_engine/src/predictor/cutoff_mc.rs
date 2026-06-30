@@ -1,8 +1,8 @@
 //! Market-volatility Monte Carlo: model each branch's closing rank as a distribution
 //! learned from historical rounds, then estimate P(user gets seat) across simulated years.
 
-use rand::rngs::StdRng;
 use rand::SeedableRng;
+use rand::rngs::StdRng;
 use rand_distr::{Distribution, Normal};
 use rayon::prelude::*;
 
@@ -102,7 +102,12 @@ pub fn simulate_branch_probability(
     distribution: CutoffDistribution,
     iterations: usize,
 ) -> Result<f64, DistributionError> {
-    simulate_branch_probability_with_adjustment(user_rank, distribution, SeatCapacityAdjustment::default(), iterations)
+    simulate_branch_probability_with_adjustment(
+        user_rank,
+        distribution,
+        SeatCapacityAdjustment::default(),
+        iterations,
+    )
 }
 
 pub fn simulate_branch_probability_with_adjustment(
@@ -176,12 +181,7 @@ mod tests {
         BranchCutoffHistory {
             institute: "DTU".into(),
             branch: "CSE".into(),
-            yearly_cutoffs: vec![
-                (2022, 4_800),
-                (2023, 5_100),
-                (2024, 4_950),
-                (2025, 5_300),
-            ],
+            yearly_cutoffs: vec![(2022, 4_800), (2023, 5_100), (2024, 4_950), (2025, 5_300)],
         }
     }
 
@@ -203,7 +203,10 @@ mod tests {
     fn rank_near_mean_has_fractional_probability() {
         let dist = dtu_cse_history().distribution().unwrap();
         let p = simulate_branch_probability(5_100, dist, 50_000).unwrap();
-        assert!(p > 20.0 && p < 60.0, "expected middling probability, got {p}");
+        assert!(
+            p > 20.0 && p < 60.0,
+            "expected middling probability, got {p}"
+        );
     }
 
     #[test]

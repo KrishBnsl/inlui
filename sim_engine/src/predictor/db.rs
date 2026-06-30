@@ -14,14 +14,16 @@ pub struct HistoricalCutoff {
     pub is_defence: bool,
     pub opening_rank: i32,
     pub closing_rank: i32,
-    
+
     // Virtual fields joined from the institutes/programs tables for our routing mapping
     pub institute_name: String,
     pub program_name: String,
     pub state: String,
 }
 
-pub async fn fetch_cutoffs_for_simulation(pool: &PgPool) -> Result<Vec<HistoricalCutoff>, sqlx::Error> {
+pub async fn fetch_cutoffs_for_simulation(
+    pool: &PgPool,
+) -> Result<Vec<HistoricalCutoff>, sqlx::Error> {
     // No ORDER BY — results are aggregated into a HashMap in memory so DB ordering is unused overhead.
     sqlx::query_as::<_, HistoricalCutoff>(
         r#"

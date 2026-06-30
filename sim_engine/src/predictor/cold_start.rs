@@ -1,9 +1,9 @@
 //! Nearest-neighbor proxy when a branch has no historical cutoffs.
 
 use super::cutoff_mc::CutoffDistribution;
+use super::normalization;
 use super::normalization::CohortRegistry;
 use super::quota_matrix::QuotaAssetKey;
-use super::normalization;
 
 /// Link a new branch to a comparable existing asset's volatility model.
 #[derive(Debug, Clone)]
@@ -21,9 +21,9 @@ impl Default for ColdStartProxy {
             proxy_key: QuotaAssetKey {
                 institute: String::new(),
                 branch: String::new(),
-                quota: crate::enumerations::enums::quota::OtherState,
-                category: crate::enumerations::enums::category::General,
-                counselling: crate::enumerations::enums::counselling::JoSAA,
+                quota: crate::enumerations::enums::Quota::OtherState,
+                category: crate::enumerations::enums::Category::General,
+                counselling: crate::enumerations::enums::Counselling::JoSAA,
             },
             percentile_mean_offset: 0.0,
             percentile_std_scale: 1.0,
@@ -45,7 +45,10 @@ pub fn distribution_from_proxy(
 }
 
 /// Convenience builder: new branch leans toward a more competitive proxy (e.g. CSE).
-pub fn toward_competitive_proxy(proxy_key: QuotaAssetKey, weight_toward_upper: f64) -> ColdStartProxy {
+pub fn toward_competitive_proxy(
+    proxy_key: QuotaAssetKey,
+    weight_toward_upper: f64,
+) -> ColdStartProxy {
     let w = weight_toward_upper.clamp(0.0, 1.0);
     ColdStartProxy {
         proxy_key,
