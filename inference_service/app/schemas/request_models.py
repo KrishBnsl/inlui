@@ -6,6 +6,8 @@ seatcraft/src/lib/types.ts, with additional optional fields for
 ML-specific preferences.
 """
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -92,6 +94,15 @@ class PredictRequest(BaseModel):
         ge=1,
         le=200,
         description="Maximum number of recommendations to return (sorted by score).",
+    )
+    sort_mode: Literal[
+        "best_fit",
+        "highest_probability",
+        "most_competitive",
+        "safest_backup",
+    ] = Field(
+        default="best_fit",
+        description="Backend ranking mode. Default is composite best realistic fit.",
     )
 
 

@@ -1,7 +1,7 @@
 """Pydantic request/response schemas for the RAG API."""
 
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 # ── Requests ────────────────────────────────────────────────────────────────────
@@ -38,3 +38,14 @@ class StatusResponse(BaseModel):
     """Response from GET /api/rag/status."""
     chunk_count: int
     documents: list[str]
+    vector_store_available: bool
+    persistence: str = "in_memory"
+
+
+class HealthResponse(BaseModel):
+    """Response from GET /health."""
+    status: str
+    google_api_key_configured: bool
+    missing: list[str] = Field(default_factory=list)
+    vector_store_available: bool
+    chunk_count: int

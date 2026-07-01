@@ -10,7 +10,8 @@ import logging
 
 from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 
-from app.models import AskRequest, AskResponse, StatusResponse, UploadResponse
+from app.config import settings
+from app.models import AskRequest, AskResponse, HealthResponse, StatusResponse, UploadResponse
 
 logger = logging.getLogger("rag_service.routes")
 
@@ -19,10 +20,19 @@ router = APIRouter()
 
 # ── Health ──────────────────────────────────────────────────────────────────────
 
-@router.get("/health")
-async def health():
+@router.get("/health", response_model=HealthResponse)
+async def health(request: Request):
     """Liveness probe."""
-    return {"status": "ok"}
+    pipeline = getattr(request.app.state, "pipeline", None)
+    chunk_count = pipeline.store.chunk_count if pipeline is not None else 0
+    key_configured = bool(settings.google_api_key)
+    return HealthResponse(
+        status="ok" if key_configured else "degraded",
+        google_api_key_configured=key_configured,
+        missing=[] if key_configured else ["GOOGLE_API_KEY"],
+        vector_store_available=chunk_count > 0,
+        chunk_count=chunk_count,
+    )
 
 
 # ── Upload ──────────────────────────────────────────────────────────────────────
@@ -75,4 +85,6 @@ async def rag_status(request: Request):
     return StatusResponse(
         chunk_count=pipeline.store.chunk_count,
         documents=pipeline.store.documents,
+        vector_store_available=pipeline.store.chunk_count > 0,
+        persistence="in_memory",
     )

@@ -2,9 +2,10 @@
 
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Bookmark, BookmarkCheck, ChevronDown, ChevronUp, Search } from "lucide-react";
-import type { PredictionResult, ProbabilityTier } from "@/lib/types";
-import { getProbabilityTier } from "@/lib/types";
+import { Bookmark, BookmarkCheck, Search } from "lucide-react";
+import type { BucketFilter, PredictionResult } from "@/lib/types";
+import { filterByBucket } from "@/lib/types";
+import { RESULT_SORT_LABELS, sortResults, type ResultSortMode } from "@/lib/result-sorting";
 import ProbabilityBadge from "./ProbabilityBadge";
 
 interface ResultsTableProps {
@@ -14,9 +15,7 @@ interface ResultsTableProps {
   onToggleSaved: (result: PredictionResult) => void;
 }
 
-type SortDir = "desc" | "asc";
 type FilterType = "ALL" | "IIT" | "NIT" | "IIIT" | "GFTI";
-type TierFilter = "ALL" | ProbabilityTier;
 
 const TYPE_BADGE: Record<string, string> = {
   IIT: "bg-neutral-900 text-neutral-200 border-neutral-700",
@@ -48,29 +47,23 @@ export default function ResultsTable({
 }: ResultsTableProps) {
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<FilterType>("ALL");
-  const [tierFilter, setTierFilter] = useState<TierFilter>("ALL");
-  // Default: highest probability first (colleges you can get = top)
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [tierFilter, setTierFilter] = useState<BucketFilter>("ALL");
+  const [sortMode, setSortMode] = useState<ResultSortMode>("best_fit");
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
-    const subset = results.filter((r) => {
+    const bucketedResults = filterByBucket(results, tierFilter);
+    const subset = bucketedResults.filter((r) => {
       if (filterType !== "ALL" && r.institute_type !== filterType) return false;
-      if (tierFilter !== "ALL" && getProbabilityTier(r.probability_percent) !== tierFilter) return false;
       if (q && !r.institute_name.toLowerCase().includes(q) && !r.program_name.toLowerCase().includes(q)) return false;
       return true;
     });
 
-    // Always produce a fresh sorted array — never mutate in place
-    return [...subset].sort((a, b) =>
-      sortDir === "desc"
-        ? b.probability_percent - a.probability_percent
-        : a.probability_percent - b.probability_percent
-    );
-  }, [results, search, filterType, tierFilter, sortDir]);
+    return sortResults(subset, sortMode);
+  }, [results, search, filterType, tierFilter, sortMode]);
 
   const FILTERS: FilterType[] = ["ALL", "IIT", "NIT", "IIIT", "GFTI"];
-  const TIER_FILTERS: { value: TierFilter; label: string }[] = [
+  const TIER_FILTERS: { value: BucketFilter; label: string }[] = [
     { value: "ALL", label: "All odds" },
     { value: "safe", label: "Safe" },
     { value: "target", label: "Target" },
@@ -114,7 +107,7 @@ export default function ResultsTable({
         </div>
       </div>
 
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap items-center gap-2">
           {TIER_FILTERS.map((filter) => (
             <button
               key={filter.value}
@@ -128,6 +121,20 @@ export default function ResultsTable({
               {filter.label}
             </button>
           ))}
+          <label className="ml-auto flex items-center gap-2 text-xs text-neutral-500">
+            Sort
+            <select
+              value={sortMode}
+              onChange={(event) => setSortMode(event.target.value as ResultSortMode)}
+              className="rounded-md border border-neutral-800 bg-neutral-950 px-2.5 py-1.5 text-xs text-neutral-200 outline-none transition-colors focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/25"
+            >
+              {(Object.keys(RESULT_SORT_LABELS) as ResultSortMode[]).map((mode) => (
+                <option key={mode} value={mode}>
+                  {RESULT_SORT_LABELS[mode]}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
       </div>
 
@@ -146,18 +153,8 @@ export default function ResultsTable({
               <th className="text-right px-5 py-3.5 text-xs text-neutral-500 font-medium">
                 Proj. Cutoff
               </th>
-              {/* Clickable sort header */}
-              <th
-                onClick={() => setSortDir((d) => (d === "desc" ? "asc" : "desc"))}
-                className="text-right px-5 py-3.5 text-xs text-neutral-400 font-medium
-                  cursor-pointer hover:text-white select-none transition-colors group"
-              >
-                <span className="inline-flex items-center gap-1 justify-end">
-                  Probability
-                  <span className="text-cyan-400 group-hover:text-cyan-300 transition-colors">
-                    {sortDir === "desc" ? <ChevronDown size={13} /> : <ChevronUp size={13} />}
-                  </span>
-                </span>
+              <th className="text-right px-5 py-3.5 text-xs text-neutral-500 font-medium">
+                Probability
               </th>
             </tr>
           </thead>
@@ -171,8 +168,7 @@ export default function ResultsTable({
             ) : (
               filtered.map((r, i) => (
                 <motion.tr
-                  // key includes sort direction so Framer re-renders on sort change
-                  key={`${sortDir}-${r.id}`}
+                  key={`${sortMode}-${r.id}`}
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: Math.min(i * 0.025, 0.4), duration: 0.2 }}
@@ -255,7 +251,7 @@ export default function ResultsTable({
         ) : (
           filtered.map((r, i) => (
             <motion.div
-              key={`${sortDir}-${r.id}`}
+              key={`${sortMode}-${r.id}`}
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: Math.min(i * 0.025, 0.4) }}
@@ -329,7 +325,7 @@ export default function ResultsTable({
       {filtered.length > 0 && (
         <p className="text-center text-xs text-neutral-600 pt-1">
           Showing {filtered.length} of {results.length} options ·{" "}
-          {sortDir === "desc" ? "Highest probability first" : "Lowest probability first"}
+          {RESULT_SORT_LABELS[sortMode]}
         </p>
       )}
     </div>

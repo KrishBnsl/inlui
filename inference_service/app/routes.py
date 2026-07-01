@@ -24,7 +24,7 @@ from app.schemas.response_models import (
     RecommendResponse,
 )
 from app.services.chatbot_context_service import build_context_block
-from app.services.inference_service import filter_universe, run_inference
+from app.services.inference_service import assign_rank_sources, filter_universe, run_inference
 from app.services.recommendation_service import build_recommendations
 from app.utils.validation import validate_predict_request
 
@@ -40,10 +40,19 @@ async def health(request: Request) -> HealthResponse:
     """Liveness + readiness probe — confirms artifacts are loaded."""
     artifacts = getattr(request.app.state, "artifacts", None)
     loaded = artifacts is not None
+    missing = {
+        "model": "missing",
+        "preprocessing_pipeline": "missing",
+        "label_encoders": "missing",
+        "feature_schema": "missing",
+        "residual_uncertainty": "missing",
+        "program_universe": "missing",
+    }
     return HealthResponse(
-        status="ok",
+        status="ok" if loaded else "degraded",
         artifacts_loaded=loaded,
         universe_size=artifacts.universe_size if loaded else 0,
+        artifact_status=artifacts.artifact_status if loaded else missing,
     )
 
 
@@ -89,16 +98,26 @@ def _run_full_pipeline(request: Request, req: PredictRequest) -> tuple[pd.DataFr
             ),
         )
 
+    try:
+        choices = assign_rank_sources(
+            choices,
+            main_rank=req.main_rank,
+            advanced_rank=req.advanced_rank,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
     # ── Run model inference ────────────────────────────────────────────────
     choices = run_inference(
         choices=choices,
         model=artifacts.model,
         prep_pipeline=artifacts.prep_pipeline,
         label_encoders=artifacts.label_encoders,
+        feature_schema=artifacts.feature_schema,
     )
 
     # ── Run Monte Carlo + ranking ──────────────────────────────────────────
-    student_rank = req.advanced_rank if req.advanced_rank else req.main_rank
+    student_rank = req.main_rank
 
     ranked = build_recommendations(
         choices=choices,
@@ -107,6 +126,7 @@ def _run_full_pipeline(request: Request, req: PredictRequest) -> tuple[pd.DataFr
         round_=req.round,
         mc_enabled=req.mc_enabled,
         top_n=req.top_n,
+        sort_mode=req.sort_mode,
     )
 
     return ranked, choices
@@ -154,6 +174,7 @@ def _row_to_item(row: pd.Series, idx: int, student_rank: int) -> RecommendationI
         quota_applied=str(row.get("quota", "AI")),
         category=str(row.get("category", "")),
         probability_percent=prob_pct,
+        admission_probability=prob,
         projected_closing_rank=int(row.get("predicted_closing_rank", 0)),
         uncertainty_lower=int(lower) if lower is not None and not pd.isna(lower) else None,
         uncertainty_upper=int(upper) if upper is not None and not pd.isna(upper) else None,
@@ -161,6 +182,14 @@ def _row_to_item(row: pd.Series, idx: int, student_rank: int) -> RecommendationI
         confidence_label=str(row.get("confidence_label", "Unknown")),
         explanation=str(row.get("explanation", "")),
         recommendation_score=float(row.get("recommendation_score", 0.0)),
+        fit_score=float(row.get("fit_score", 0.0)),
+        competitiveness_score=float(row.get("competitiveness_score", 0.0)),
+        institute_score=float(row.get("institute_score", 0.0)),
+        branch_score=float(row.get("branch_score", 0.0)),
+        safety_score=float(row.get("safety_score", 0.0)),
+        recommendation_bucket=str(row.get("recommendation_bucket", "")) or None,
+        rank_used=int(row.get("rank_used", student_rank)),
+        rank_type_used=str(row.get("rank_type_used", "main")),
         historical_data=historical,
     )
 
@@ -172,9 +201,9 @@ def _build_response(ranked: pd.DataFrame, req: PredictRequest) -> RecommendRespo
         for idx, row in ranked.iterrows()
     ]
 
-    safe_items = [r for r in items if r.confidence_label == "Safe"]
-    mod_items = [r for r in items if r.confidence_label == "Moderate"]
-    amb_items = [r for r in items if r.confidence_label == "Ambitious"]
+    safe_items = [r for r in items if r.recommendation_bucket == "safe_backup"]
+    target_items = [r for r in items if r.recommendation_bucket == "best_realistic"]
+    reach_items = [r for r in items if r.recommendation_bucket == "ambitious_reach"]
 
     safest_choice = (
         f"{safe_items[0].institute_name} — {safe_items[0].program_name}"
@@ -182,13 +211,13 @@ def _build_response(ranked: pd.DataFrame, req: PredictRequest) -> RecommendRespo
         else (items[0].institute_name + " — " + items[0].program_name if items else "—")
     )
     top_upgrade = (
-        f"{mod_items[0].institute_name} — {mod_items[0].program_name}"
-        if mod_items
+        f"{reach_items[0].institute_name} — {reach_items[0].program_name}"
+        if reach_items
         else safest_choice
     )
     most_ambitious = (
-        f"{amb_items[0].institute_name} — {amb_items[0].program_name}"
-        if amb_items
+        f"{reach_items[0].institute_name} — {reach_items[0].program_name}"
+        if reach_items
         else (items[-1].institute_name + " — " + items[-1].program_name if items else "—")
     )
 
@@ -198,8 +227,8 @@ def _build_response(ranked: pd.DataFrame, req: PredictRequest) -> RecommendRespo
         top_upgrade=top_upgrade,
         most_ambitious=most_ambitious,
         safe_count=len(safe_items),
-        moderate_count=len(mod_items),
-        ambitious_count=len(amb_items),
+        moderate_count=len(target_items),
+        ambitious_count=len(reach_items),
         results=items,
     )
 

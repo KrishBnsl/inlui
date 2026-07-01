@@ -11,7 +11,7 @@ This project frames the problem as probabilistic decision support:
 - Predict the likely closing rank for each eligible program.
 - Estimate uncertainty from historical residual behavior.
 - Convert a student's rank into admission probability.
-- Rank options by probability and safety margin.
+- Rank options by best realistic fit, balancing desirability, competitiveness, admission odds, and closeness to the student's rank.
 - Explain recommendations through a Gemini-powered counselling assistant.
 
 ## System Overview
@@ -27,13 +27,20 @@ graph TD
     G --> H[FastAPI Inference Service]
     H --> I[Next.js SeatCraft UI]
     H --> J[Gemini RAG Advisor]
-    K[Rust Simulation Engine] --> I
+    K[Optional Rust Simulation Engine] -. experiments .-> I
 ```
+
+There is no separate `rank_service` in this repository. Ranking/business logic
+lives inside `inference_service/app/services/` and is backed by shared schema
+constants in `shared/josaa_core/`. The `models/` directory remains the offline
+training and artifact-generation pipeline; it is not merged into the online
+service.
 
 ## Repository Layout
 
 - `models/`: offline ML pipeline, feature engineering, model training, benchmarking, evaluation, and saved artifacts.
 - `inference_service/`: FastAPI service for loading artifacts, validating requests, predicting cutoffs, running Monte Carlo simulation, and returning ranked recommendations.
+- `shared/josaa_core/`: small shared contracts such as the canonical model feature schema and target-leakage guard list.
 - `sim_engine/`: Rust simulation engine for high-performance quota-routing experiments and validation.
 - `rag_service/`: FastAPI + LangChain + Gemini RAG service for document-grounded counselling answers.
 - `seatcraft/`: Next.js frontend for rank intake, recommendation tables, saved choices, volatility inspection, and chat.
@@ -73,17 +80,38 @@ For every eligible option, the inference service:
 
 1. Filters the program universe by category, gender, round, PwD flag, institute type, and branch keywords.
 2. Excludes IIT options unless a JEE Advanced rank is provided.
-3. Avoids unverifiable Home State rows unless institute-state metadata proves the row applies.
-4. Predicts the closing rank.
-5. Samples `N=1000` Monte Carlo draws using empirical residual standard deviations with a volatility floor.
-6. Computes admission probability and a 90% interval.
-7. Ranks options by probability and normalized safety margin.
+3. Uses JEE Advanced rank for IIT rows and JEE Main rank for NIT/IIIT/GFTI rows, even when both ranks are present.
+4. Avoids unverifiable Home State rows unless institute-state metadata proves the row applies.
+5. Predicts the closing rank.
+6. Samples `N=1000` Monte Carlo draws using empirical residual standard deviations with a volatility floor.
+7. Computes admission probability and a 90% interval.
+8. Ranks options by a best-fit score that favors competitive, desirable choices when admission odds are realistic, with safe backups and ambitious reaches grouped separately.
+
+Default ordering is by `recommendation_score`, not raw probability. The score blends:
+
+- fit score: strongest when the predicted cutoff is realistic for the student's rank.
+- admissibility score: admission probability shaped so 95-100% backups do not dominate.
+- competitiveness score: lower projected cutoffs are more competitive when odds are meaningful.
+- institute and branch scores: configurable desirability priors for institute type and branch family.
+- safety score: used for the explicit "Safest backup" sort mode.
+
+Admission probability answers "can I get this?" Recommendation score answers
+"is this a strong realistic choice to place high?"
 
 Safety labels:
 
 - Safe: probability >= 0.80
 - Moderate: 0.40 <= probability < 0.80
 - Ambitious: probability < 0.40
+
+Recommendation buckets:
+
+- Best realistic: roughly 35-85% probability with strong desirability and rank fit.
+- Safe backup: probability >= 80%.
+- Ambitious reach: probability below 40%.
+
+Every returned recommendation includes `rank_used` and `rank_type_used` so the UI
+and RAG advisor can explain whether a row used Main or Advanced rank.
 
 ## Services
 
@@ -96,11 +124,17 @@ Default local ports:
 | ML API | 8082 | Inference at `/api/v1/predict` and `/api/v1/chat-context` |
 | Frontend | 3000 | SeatCraft web app |
 
+The frontend uses `NEXT_PUBLIC_ML_URL` for recommendations and ML chat-context,
+and `NEXT_PUBLIC_RAG_URL` for document-grounded chat. It does not silently fall
+back to mock recommendations when ML fails.
+
 ## Run With Docker
 
 ```bash
 docker-compose up --build
 ```
+
+This starts PostgreSQL, the optional Rust API, RAG, ML inference, and the Next.js frontend at `http://localhost:3000`. Copy `.env.example` to `.env` and set `GOOGLE_API_KEY` before using Gemini-backed RAG.
 
 To run the one-off Rust ingest job:
 
@@ -127,6 +161,10 @@ python train_models.py
 python recommendation.py
 python evaluation.py
 ```
+
+`train_models.py` writes `models/model_artifacts/feature_schema.json`, which is
+loaded by inference. The service fails clearly when required artifacts are
+missing instead of returning fake recommendations.
 
 Inference service:
 
@@ -167,6 +205,17 @@ NEXT_PUBLIC_ML_URL=http://localhost:8082
 NEXT_PUBLIC_RAG_URL=http://localhost:8081
 ```
 
+Required environment variables:
+
+- `NEXT_PUBLIC_ML_URL`: frontend base URL for `inference_service`.
+- `NEXT_PUBLIC_RAG_URL`: frontend base URL for `rag_service`.
+- `NEXT_PUBLIC_API_URL`: optional Rust simulator URL.
+- `GOOGLE_API_KEY`: required for Gemini RAG answers.
+- `ARTIFACTS_DIR`, `DATA_DIR`, `MODELS_DIR`: inference artifact/data paths.
+
+RAG vectors are currently in-memory. Uploaded documents and embeddings are not
+persistent across service restarts.
+
 ## Validation
 
 Useful checks:
@@ -174,6 +223,7 @@ Useful checks:
 ```bash
 cd seatcraft && npm run lint
 cd seatcraft && npm run build
+cd seatcraft && npm test
 cd sim_engine && cargo test
 python3 -m py_compile models/preprocessing.py models/eda_features.py models/train_models.py models/evaluation.py models/recommendation.py models/predict.py inference_service/main.py rag_service/main.py
 ```
@@ -184,6 +234,10 @@ Python tests live under `inference_service/tests/` and require the Python test d
 cd inference_service
 pytest tests -q
 ```
+
+Important backend test files include rank sensitivity, recommendation ordering,
+JoSAA rank-source rules, feature-leakage guards, schema contracts, and artifact
+health behavior under `inference_service/tests/`.
 
 ## Current Limitations
 

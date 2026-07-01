@@ -2,11 +2,14 @@
 
 import { motion, type Variants } from "framer-motion";
 import { CheckCircle2, ListChecks, TrendingUp } from "lucide-react";
+import type { PredictionResult } from "@/lib/types";
+import { formatChoiceName, getTopBucketChoice } from "@/lib/types";
 
 interface SummaryCardsProps {
   total_options: number;
   safest_choice: string;
   top_upgrade: string;
+  results: PredictionResult[];
 }
 
 const cardVariants: Variants = {
@@ -22,7 +25,13 @@ export default function SummaryCards({
   total_options,
   safest_choice,
   top_upgrade,
+  results,
 }: SummaryCardsProps) {
+  const safestBucketChoice = getTopBucketChoice(results, "safe_backup");
+  const reachBucketChoice = getTopBucketChoice(results, "ambitious_reach");
+  const safestValue = formatChoiceName(safestBucketChoice, safest_choice);
+  const reachValue = formatChoiceName(reachBucketChoice, top_upgrade);
+
   const cards = [
     {
       icon: <ListChecks size={18} className="text-neutral-400" />,
@@ -34,14 +43,14 @@ export default function SummaryCards({
     {
       icon: <CheckCircle2 size={18} className="text-emerald-400" />,
       label: "Safest choice",
-      value: safest_choice,
+      value: safestValue,
       sub: "Highest probability in the current result set",
       accent: "border-neutral-800 bg-neutral-900/30",
     },
     {
       icon: <TrendingUp size={18} className="text-amber-400" />,
       label: "Best reach option",
-      value: top_upgrade,
+      value: reachValue,
       sub: "Ambitious option still worth tracking",
       accent: "border-neutral-800 bg-neutral-900/30",
     },

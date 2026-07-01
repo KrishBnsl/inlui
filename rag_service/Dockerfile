@@ -13,7 +13,11 @@ RUN apt-get update && \
 
 # Install Python deps (cached layer)
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN python -m pip install --upgrade pip && \
+    pip install --progress-bar off --default-timeout=120 --retries 10 --prefer-binary -r requirements.txt
+
+# Vector store (split because this is the largest wheel and network failures are common)
+RUN pip install --progress-bar off --default-timeout=120 --retries 10 --prefer-binary faiss-cpu==1.11.0
 
 # Copy application code
 COPY . .

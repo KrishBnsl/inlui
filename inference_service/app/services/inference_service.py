@@ -13,34 +13,29 @@ so it is easy to unit-test without touching the filesystem.
 """
 
 import logging
+import sys
+from pathlib import Path
 from typing import Any
 
 import numpy as np
 import pandas as pd
 
-logger = logging.getLogger("inference_service.inference_service")
+REPO_ROOT = Path(__file__).resolve().parents[3]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
-# Feature columns in the exact order the preprocessing pipeline expects
-REQUIRED_FEATURES = [
-    "year", "round",
-    "institute_type_encoded", "category_encoded", "quota_encoded",
-    "gender_encoded", "degree_type_encoded",
-    "opening_rank", "log_opening_rank",
-    "rank_spread", "duration_years",
-    "institute_freq", "program_freq", "category_freq", "institute_type_freq",
-    "hist_mean_closing_rank", "hist_std_closing_rank",
-    "hist_min_closing_rank", "hist_max_closing_rank", "hist_year_count",
-    "prev_round_closing_rank", "round_delta",
-    "closing_rank_vs_hist_mean", "closing_rank_ratio_hist",
-    "is_final_round", "years_since_ews",
-    "is_pwd",
-    "opening_percentile", "competitiveness_ratio", "applicants",
-]
+from shared.josaa_core.feature_schema import MODEL_FEATURES, assert_no_forbidden_features
+
+logger = logging.getLogger("inference_service.inference_service")
 
 
 # ── Feature encoding ────────────────────────────────────────────────────────────
 
-def encode_features(df: pd.DataFrame, label_encoders: dict) -> pd.DataFrame:
+def encode_features(
+    df: pd.DataFrame,
+    label_encoders: dict,
+    feature_schema: list[str] | None = None,
+) -> pd.DataFrame:
     """
     Apply label encoders to produce the integer-encoded feature columns
     expected by the preprocessing pipeline.
@@ -67,13 +62,16 @@ def encode_features(df: pd.DataFrame, label_encoders: dict) -> pd.DataFrame:
     for c in bool_cols:
         encoded[c] = encoded[c].astype(int)
 
+    required_features = feature_schema or MODEL_FEATURES
+    assert_no_forbidden_features(required_features)
+
     # Ensure all required columns exist (fill with 0 if missing)
-    for col in REQUIRED_FEATURES:
+    for col in required_features:
         if col not in encoded.columns:
             logger.warning(f"Feature column '{col}' missing — defaulting to 0")
             encoded[col] = 0
 
-    return encoded[REQUIRED_FEATURES]
+    return encoded[required_features]
 
 
 # ── Universe filtering ──────────────────────────────────────────────────────────
@@ -171,6 +169,41 @@ def filter_universe(
     return universe[mask].copy()
 
 
+def assign_rank_sources(
+    choices: pd.DataFrame,
+    main_rank: int | None,
+    advanced_rank: int | None = None,
+    iit_only: bool = False,
+) -> pd.DataFrame:
+    """
+    Attach JoSAA rank source metadata per row.
+
+    IIT cutoffs are keyed to JEE Advanced rank. NIT, IIIT, and GFTI cutoffs are
+    keyed to JEE Main rank even when an Advanced rank is also present.
+    """
+    if choices.empty:
+        return choices.copy()
+
+    choices = choices.copy()
+    inst_type = choices["institute_type"].astype(str).str.upper()
+    is_iit = inst_type == "IIT"
+
+    if is_iit.any() and advanced_rank is None:
+        choices = choices.loc[~is_iit].copy()
+        inst_type = choices["institute_type"].astype(str).str.upper()
+        is_iit = inst_type == "IIT"
+
+    if (~is_iit).any() and main_rank is None and not iit_only:
+        raise ValueError("main_rank is required for NIT/IIIT/GFTI recommendations")
+
+    if is_iit.any() and advanced_rank is None:
+        raise ValueError("advanced_rank is required for IIT recommendations")
+
+    choices["rank_used"] = np.where(is_iit, advanced_rank, main_rank).astype(int)
+    choices["rank_type_used"] = np.where(is_iit, "advanced", "main")
+    return choices
+
+
 # ── Main inference call ─────────────────────────────────────────────────────────
 
 def run_inference(
@@ -178,6 +211,7 @@ def run_inference(
     model: Any,
     prep_pipeline: Any,
     label_encoders: dict,
+    feature_schema: list[str] | None = None,
 ) -> pd.DataFrame:
     """
     Run the trained Ridge regression model on a filtered set of choices.
@@ -201,7 +235,7 @@ def run_inference(
     if choices.empty:
         return choices
 
-    features_df = encode_features(choices, label_encoders)
+    features_df = encode_features(choices, label_encoders, feature_schema)
 
     try:
         # Pass a DataFrame since ColumnTransformer expects it (with correct column names/order)

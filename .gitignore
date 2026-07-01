@@ -69,3 +69,6 @@ __pycache__/
 venv/
 .pytest_cache/
 models/model_artifacts/
+!models/model_artifacts/
+models/model_artifacts/*
+!models/model_artifacts/feature_schema.json

@@ -41,6 +41,9 @@ class RecommendationItem(BaseModel):
     probability_percent: float = Field(
         ..., description="Admission probability as a percentage [0, 100]."
     )
+    admission_probability: float = Field(
+        ..., description="Admission probability as a decimal [0, 1]."
+    )
     projected_closing_rank: int = Field(
         ..., description="Model-predicted closing rank for the upcoming round."
     )
@@ -75,6 +78,19 @@ class RecommendationItem(BaseModel):
         default=None,
         description="Internal composite ranking score (higher is better).",
     )
+    fit_score: float | None = Field(default=None, description="Rank-fit score [0, 1].")
+    competitiveness_score: float | None = Field(
+        default=None, description="Competitiveness/desirability of projected cutoff [0, 1]."
+    )
+    institute_score: float | None = Field(default=None, description="Institute desirability score [0, 1].")
+    branch_score: float | None = Field(default=None, description="Branch desirability score [0, 1].")
+    safety_score: float | None = Field(default=None, description="Safety score [0, 1].")
+    recommendation_bucket: str | None = Field(
+        default=None,
+        description="best_realistic | safe_backup | ambitious_reach | very_safe | unlikely_reach",
+    )
+    rank_used: int = Field(..., description="The exam rank used for this recommendation row.")
+    rank_type_used: str = Field(..., description="main for NIT/IIIT/GFTI, advanced for IIT.")
 
     # ── Historical cutoff data (same as Rust response) ────────────────────
     historical_data: list[HistoricalDataPoint] = Field(default_factory=list)
@@ -109,6 +125,7 @@ class HealthResponse(BaseModel):
     status: str
     artifacts_loaded: bool
     universe_size: int
+    artifact_status: dict[str, str] = Field(default_factory=dict)
 
 
 class ChatContextResponse(BaseModel):

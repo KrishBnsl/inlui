@@ -20,6 +20,7 @@ import {
   askQuestion,
   uploadDocument,
   fileToBase64,
+  getRagHealth,
   type Source,
 } from "@/lib/rag-api";
 import { getChatContext } from "@/lib/api";
@@ -180,6 +181,7 @@ export default function ChatAdvisor({ open, onClose, recommendationData }: ChatA
   const [indexedDocs, setIndexedDocs] = useState<IndexedDoc[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [healthMessage, setHealthMessage] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -198,6 +200,24 @@ export default function ChatAdvisor({ open, onClose, recommendationData }: ChatA
     ta.style.height = "auto";
     ta.style.height = `${Math.min(ta.scrollHeight, 120)}px`;
   }, [input]);
+
+  useEffect(() => {
+    if (!open) return;
+    let active = true;
+    getRagHealth()
+      .then((health) => {
+        if (!active) return;
+        setHealthMessage(
+          health.google_api_key_configured ? null : "RAG missing Google API key."
+        );
+      })
+      .catch(() => {
+        if (active) setHealthMessage("RAG unavailable.");
+      });
+    return () => {
+      active = false;
+    };
+  }, [open]);
 
   // ── Upload a PDF for indexing ─────────────────────────────────────────────
 
@@ -431,7 +451,7 @@ export default function ChatAdvisor({ open, onClose, recommendationData }: ChatA
             )}
 
             {/* ── Upload status / error ───────────────────────────────────────── */}
-            {(uploading || uploadError) && (
+            {(uploading || uploadError || healthMessage) && (
               <div className="mx-4 mb-2">
                 {uploading ? (
                   <div className="flex items-center gap-2 text-xs text-neutral-400 px-3 py-2 rounded-lg bg-neutral-800/60">
@@ -441,7 +461,7 @@ export default function ChatAdvisor({ open, onClose, recommendationData }: ChatA
                 ) : (
                   <div className="flex items-center gap-2 text-xs text-red-400 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20">
                     <AlertCircle size={12} />
-                    {uploadError}
+                    {uploadError ?? healthMessage}
                   </div>
                 )}
               </div>

@@ -674,37 +674,23 @@ def engineer_features(
         if col in df.columns:
             df[f"log_{col}"] = np.log1p(df[col].astype(float))
 
-    # --- 2. Rank gap (already exists as rank_spread, but ensure) ---
-    if "rank_spread" not in df.columns and "opening_rank" in df.columns:
-        df["rank_spread"] = df["closing_rank"] - df["opening_rank"]
-
-    # --- 3. Frequency encodings ---
+    # --- 2. Frequency encodings ---
     for col in ["institute", "program", "category", "institute_type"]:
         if col in df.columns:
             freq = df[col].value_counts(normalize=True)
             df[f"{col}_freq"] = df[col].map(freq).astype(float)
 
-    # --- 4. Historical statistics (leak-safe) ---
+    # --- 3. Historical statistics (leak-safe) ---
     df = _add_historical_stats(df, history_df)
 
-    # --- 5. Previous-round closing rank (within same year) ---
+    # --- 4. Previous-round closing rank (within same year) ---
     df = _add_prev_round_features(df)
 
-    # --- 6. Normalized cutoff relative to group mean ---
-    if "hist_mean_closing_rank" in df.columns:
-        df["closing_rank_vs_hist_mean"] = (
-            df["closing_rank"].astype(float) - df["hist_mean_closing_rank"]
-        )
-        df["closing_rank_ratio_hist"] = (
-            df["closing_rank"].astype(float) /
-            df["hist_mean_closing_rank"].replace(0, np.nan)
-        )
-
-    # --- 7. Is-final-round flag ---
+    # --- 5. Is-final-round flag ---
     max_round = df.groupby(["year"] + BRANCH_KEY)["round"].transform("max")
     df["is_final_round"] = (df["round"] == max_round).astype(int)
 
-    # --- 8. Years since EWS introduction (2019) ---
+    # --- 6. Years since EWS introduction (2019) ---
     df["years_since_ews"] = (df["year"] - 2019).clip(lower=0)
 
     log.info("Feature engineering complete — %d columns", len(df.columns))
@@ -795,11 +781,6 @@ def _add_prev_round_features(df: pd.DataFrame) -> pd.DataFrame:
     df["prev_round_closing_rank"] = (
         df.groupby(group_key)["closing_rank"].shift(1)
     )
-    df["round_delta"] = (
-        df["closing_rank"].astype(float) -
-        df["prev_round_closing_rank"].astype(float)
-    )
-
     return df
 
 
@@ -930,18 +911,17 @@ def build_regression_datasets(
         "gender_encoded", "degree_type_encoded",
         # Numeric features
         "opening_rank", "log_opening_rank",
-        "rank_spread", "duration_years",
+        "duration_years",
         "institute_freq", "program_freq", "category_freq", "institute_type_freq",
         "hist_mean_closing_rank", "hist_std_closing_rank",
         "hist_min_closing_rank", "hist_max_closing_rank", "hist_year_count",
-        "prev_round_closing_rank", "round_delta",
-        "closing_rank_vs_hist_mean", "closing_rank_ratio_hist",
+        "prev_round_closing_rank",
         "is_final_round", "years_since_ews",
         "is_pwd",
     ]
 
     # Add percentile features if available
-    for col in ["opening_percentile", "competitiveness_ratio", "applicants"]:
+    for col in ["opening_percentile", "applicants"]:
         if col in train.columns:
             feature_cols.append(col)
 
@@ -1005,11 +985,11 @@ def build_classification_datasets(
             "institute_type_encoded", "category_encoded", "quota_encoded",
             "gender_encoded", "degree_type_encoded",
             "opening_rank", "log_opening_rank",
-            "rank_spread", "duration_years",
+            "duration_years",
             "institute_freq", "program_freq", "category_freq", "institute_type_freq",
             "hist_mean_closing_rank", "hist_std_closing_rank",
             "hist_min_closing_rank", "hist_max_closing_rank", "hist_year_count",
-            "prev_round_closing_rank", "round_delta",
+            "prev_round_closing_rank",
             "is_final_round", "years_since_ews",
             "is_pwd",
         ]

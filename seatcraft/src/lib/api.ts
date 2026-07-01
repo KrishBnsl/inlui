@@ -6,6 +6,7 @@ interface MLHealth {
   status: string;
   artifacts_loaded: boolean;
   universe_size: number;
+  artifact_status?: Record<string, string>;
 }
 
 async function readError(res: Response, defaultMessage: string): Promise<string> {
@@ -46,9 +47,14 @@ export async function runMLSimulation(
 }
 
 export async function getMLHealth(): Promise<MLHealth> {
-  const res = await fetch(`${ML_BASE}/api/v1/health`);
+  let res: Response;
+  try {
+    res = await fetch(`${ML_BASE}/api/v1/health`);
+  } catch {
+    throw new Error("ML service unavailable.");
+  }
   if (!res.ok) {
-    throw new Error("ML inference service health check failed.");
+    throw new Error("ML service unavailable.");
   }
   return res.json();
 }

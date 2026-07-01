@@ -17,6 +17,16 @@ export interface AskResponse {
 export interface RagStatus {
   chunk_count: number;
   documents: string[];
+  vector_store_available: boolean;
+  persistence: "in_memory";
+}
+
+export interface RagHealth {
+  status: string;
+  google_api_key_configured: boolean;
+  missing: string[];
+  vector_store_available: boolean;
+  chunk_count: number;
 }
 
 export interface UploadResponse {
@@ -71,6 +81,17 @@ export async function askQuestion(
 export async function getRagStatus(): Promise<RagStatus> {
   const res = await fetch(`${RAG_BASE}/api/rag/status`);
   if (!res.ok) throw new Error(`Status failed (${res.status})`);
+  return res.json();
+}
+
+export async function getRagHealth(): Promise<RagHealth> {
+  let res: Response;
+  try {
+    res = await fetch(`${RAG_BASE}/health`);
+  } catch {
+    throw new Error("RAG service unavailable.");
+  }
+  if (!res.ok) throw new Error("RAG service unavailable.");
   return res.json();
 }
 

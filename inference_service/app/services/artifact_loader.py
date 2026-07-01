@@ -29,6 +29,20 @@ from app.config import settings
 logger = logging.getLogger("inference_service.artifact_loader")
 
 
+def _install_sklearn_compat_shims() -> None:
+    """Patch small sklearn pickle-compat gaps for older runtime packages."""
+    try:
+        import sklearn.compose._column_transformer as column_transformer
+    except Exception:
+        return
+
+    if not hasattr(column_transformer, "_RemainderColsList"):
+        class _RemainderColsList(list):
+            pass
+
+        column_transformer._RemainderColsList = _RemainderColsList
+
+
 # ── Data container ─────────────────────────────────────────────────────────────
 
 @dataclass
@@ -38,12 +52,23 @@ class ArtifactStore:
     model: Any
     prep_pipeline: Any
     label_encoders: dict
+    feature_schema: list[str]
     universe: pd.DataFrame
     std_map: pd.DataFrame
     universe_size: int = field(init=False)
+    artifact_status: dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         self.universe_size = len(self.universe)
+        if not self.artifact_status:
+            self.artifact_status = {
+                "model": "loaded" if self.model is not None else "missing",
+                "preprocessing_pipeline": "loaded" if self.prep_pipeline is not None else "missing",
+                "label_encoders": "loaded" if self.label_encoders else "missing",
+                "feature_schema": "loaded" if self.feature_schema else "missing",
+                "residual_uncertainty": "loaded" if not self.std_map.empty else "missing",
+                "program_universe": "loaded" if self.universe_size else "missing",
+            }
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -76,6 +101,18 @@ def _load_label_encoders(artifacts_dir: Path) -> dict:
     logger.info(f"Loading label encoders from {enc_path}")
     with open(enc_path, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def _load_feature_schema(artifacts_dir: Path) -> list[str]:
+    """Load canonical model feature order from feature_schema.json."""
+    schema_path = artifacts_dir / "feature_schema.json"
+    logger.info(f"Loading feature schema from {schema_path}")
+    with open(schema_path, "r", encoding="utf-8") as f:
+        payload = json.load(f)
+    features = payload.get("features")
+    if not isinstance(features, list) or not features:
+        raise ValueError(f"Invalid feature schema artifact: {schema_path}")
+    return [str(feature) for feature in features]
 
 
 def _load_universe(data_dir: Path) -> pd.DataFrame:
@@ -159,6 +196,7 @@ def load_all_artifacts() -> ArtifactStore:
     """
     artifacts_dir = _resolve(settings.artifacts_dir)
     data_dir = _resolve(settings.data_dir)
+    _install_sklearn_compat_shims()
 
     # Fail fast if the directory doesn't exist
     if not artifacts_dir.exists():
@@ -170,6 +208,7 @@ def load_all_artifacts() -> ArtifactStore:
     model = _load_model(artifacts_dir)
     prep_pipeline = _load_prep_pipeline(artifacts_dir)
     label_encoders = _load_label_encoders(artifacts_dir)
+    feature_schema = _load_feature_schema(artifacts_dir)
     universe = _load_universe(data_dir)
     std_map = _load_std_map(artifacts_dir)
 
@@ -177,6 +216,7 @@ def load_all_artifacts() -> ArtifactStore:
         model=model,
         prep_pipeline=prep_pipeline,
         label_encoders=label_encoders,
+        feature_schema=feature_schema,
         universe=universe,
         std_map=std_map,
     )

@@ -81,6 +81,16 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from shared.josaa_core.feature_schema import (
+    MODEL_FEATURES,
+    assert_no_forbidden_features,
+    feature_schema_payload,
+)
+
 # ---------------------------------------------------------------------------
 # Optional imports (may not be installed)
 # ---------------------------------------------------------------------------
@@ -136,31 +146,16 @@ CLASSIFICATION_TARGET = "cutoff_difficulty"
 
 # Columns used as model features (all others are identifiers or targets)
 # year and round ARE features for the model (temporal signal)
-FEATURE_COLS = [
-    "year", "round",
-    "institute_type_encoded", "category_encoded", "quota_encoded",
-    "gender_encoded", "degree_type_encoded",
-    "opening_rank", "log_opening_rank",
-    "rank_spread", "duration_years",
-    "institute_freq", "program_freq", "category_freq", "institute_type_freq",
-    "hist_mean_closing_rank", "hist_std_closing_rank",
-    "hist_min_closing_rank", "hist_max_closing_rank", "hist_year_count",
-    "prev_round_closing_rank", "round_delta",
-    "closing_rank_vs_hist_mean", "closing_rank_ratio_hist",
-    "is_final_round", "years_since_ews",
-    "is_pwd",
-    "opening_percentile", "competitiveness_ratio", "applicants",
-]
+FEATURE_COLS = MODEL_FEATURES
 
 # Columns that benefit from scaling (for Ridge / MLP)
 SCALE_SENSITIVE_FEATURES = [
-    "opening_rank", "log_opening_rank", "rank_spread",
+    "opening_rank", "log_opening_rank",
     "institute_freq", "program_freq", "category_freq", "institute_type_freq",
     "hist_mean_closing_rank", "hist_std_closing_rank",
     "hist_min_closing_rank", "hist_max_closing_rank", "hist_year_count",
-    "prev_round_closing_rank", "round_delta",
-    "closing_rank_vs_hist_mean", "closing_rank_ratio_hist",
-    "opening_percentile", "competitiveness_ratio", "applicants",
+    "prev_round_closing_rank",
+    "opening_percentile", "applicants",
     "year", "round", "duration_years", "years_since_ews",
 ]
 
@@ -1615,8 +1610,12 @@ def run_day3_pipeline(data_dir: Path) -> None:
     log.info("=" * 60)
 
     available_features = [c for c in FEATURE_COLS if c in train_df.columns]
+    assert_no_forbidden_features(available_features)
     log.info("Using %d/%d features: %s", len(available_features), len(FEATURE_COLS),
              available_features)
+    with open(artifact_dir / "feature_schema.json", "w", encoding="utf-8") as f:
+        json.dump(feature_schema_payload(available_features), f, indent=2)
+    log.info("Saved feature_schema.json")
 
     X_train, y_train = split_features_target(train_df, REGRESSION_TARGET, available_features)
     X_valid, y_valid = split_features_target(valid_df, REGRESSION_TARGET, available_features)

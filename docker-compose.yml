@@ -63,8 +63,9 @@ services:
       dockerfile: Dockerfile
     container_name: inlui_rag
     restart: unless-stopped
+    env_file:
+      - ./rag_service/.env
     environment:
-      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
       RAG_LLM_MODEL: gemini-2.5-flash
       RAG_LLM_TEMPERATURE: "0.2"
       RAG_EMBED_MODEL: models/text-embedding-004
@@ -77,8 +78,8 @@ services:
   # ── Python ML Inference service — FastAPI ─────────────────────────────────────
   inference:
     build:
-      context: ./inference_service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: inference_service/Dockerfile
     container_name: inlui_inference
     restart: unless-stopped
     environment:
@@ -90,5 +91,26 @@ services:
     volumes:
       - ./models:/app/models:ro
 
+  # ── Next.js frontend ────────────────────────────────────────────────────────
+  frontend:
+    image: node:20-alpine
+    container_name: inlui_frontend
+    restart: unless-stopped
+    working_dir: /app
+    command: sh -c "npm ci --fetch-retries=10 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 && npm run dev -- --hostname 0.0.0.0"
+    environment:
+      NEXT_PUBLIC_ML_URL: http://localhost:8082
+      NEXT_PUBLIC_RAG_URL: http://localhost:8081
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./seatcraft:/app
+      - seatcraft_node_modules:/app/node_modules
+    depends_on:
+      - inference
+      - rag
+
 volumes:
   postgres_data:
+  seatcraft_node_modules:

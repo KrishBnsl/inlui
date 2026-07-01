@@ -60,7 +60,7 @@ export default function Home() {
     try {
       const health = await getMLHealth();
       if (!health.artifacts_loaded) {
-        throw new Error("ML inference service is running, but model artifacts are not loaded.");
+        throw new Error("model artifacts missing");
       }
       const data = await runMLSimulation(input);
       setResponse(data);
@@ -256,6 +256,7 @@ export default function Home() {
                     total_options={response.total_options}
                     safest_choice={response.safest_choice}
                     top_upgrade={response.top_upgrade}
+                    results={response.results}
                   />
 
                   {/* Results Table */}
