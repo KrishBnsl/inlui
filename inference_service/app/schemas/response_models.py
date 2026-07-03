@@ -44,6 +44,14 @@ class RecommendationItem(BaseModel):
     admission_probability: float = Field(
         ..., description="Admission probability as a decimal [0, 1]."
     )
+    model_probability_percent: float | None = Field(
+        default=None,
+        description="Raw model/Monte Carlo admission probability as a percentage [0, 100].",
+    )
+    calibrated_probability_percent: float | None = Field(
+        default=None,
+        description="Displayed probability after cutoff-distance calibration [0, 100].",
+    )
     projected_closing_rank: int = Field(
         ..., description="Model-predicted closing rank for the upcoming round."
     )
@@ -66,6 +74,10 @@ class RecommendationItem(BaseModel):
             "Positive → student is safer; negative → student is at reach."
         ),
     )
+    rank_ratio: float | None = Field(
+        default=None,
+        description="rank_used / projected_closing_rank. Greater than 1 means the option is harder than the student's rank.",
+    )
     confidence_label: str | None = Field(
         default=None,
         description="Safe | Moderate | Ambitious",
@@ -87,10 +99,10 @@ class RecommendationItem(BaseModel):
     safety_score: float | None = Field(default=None, description="Safety score [0, 1].")
     recommendation_bucket: str | None = Field(
         default=None,
-        description="best_realistic | safe_backup | ambitious_reach | very_safe | unlikely_reach",
+        description="safe_backup | best_realistic | ambitious_reach | unlikely_reach",
     )
     rank_used: int = Field(..., description="The exam rank used for this recommendation row.")
-    rank_type_used: str = Field(..., description="main for NIT/IIIT/GFTI, advanced for IIT.")
+    rank_type_used: str = Field(..., description="JEE_MAIN for NIT/IIIT/GFTI, JEE_ADVANCED for IIT.")
 
     # ── Historical cutoff data (same as Rust response) ────────────────────
     historical_data: list[HistoricalDataPoint] = Field(default_factory=list)
@@ -114,6 +126,18 @@ class RecommendResponse(BaseModel):
     safe_count: int | None = Field(default=None, description="Number of Safe recommendations.")
     moderate_count: int | None = Field(default=None, description="Number of Moderate recommendations.")
     ambitious_count: int | None = Field(default=None, description="Number of Ambitious recommendations.")
+    bucket_counts: dict[str, int] = Field(
+        default_factory=dict,
+        description="Counts across the full candidate set before normal result trimming.",
+    )
+    institute_type_counts: dict[str, int] = Field(
+        default_factory=dict,
+        description="Counts by institute type across the full candidate set before normal result trimming.",
+    )
+    rank_window_debug: dict = Field(
+        default_factory=dict,
+        description="Rank-specific reach windows used for this request.",
+    )
 
     # ── Results list ─────────────────────────────────────────────────────
     results: list[RecommendationItem]

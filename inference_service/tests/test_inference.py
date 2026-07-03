@@ -16,7 +16,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.services.artifact_loader import load_all_artifacts
-from app.services.inference_service import filter_universe, run_inference
+from app.services.inference_service import assign_rank_sources, filter_universe, run_inference
 from app.services.recommendation_service import build_recommendations
 
 
@@ -263,3 +263,49 @@ class TestBuildRecommendations:
         )
         scores = ranked["recommendation_score"].tolist()
         assert scores == sorted(scores, reverse=True), "Results must be sorted by score descending"
+
+    def test_rank_3000_advanced_6700_returns_realistic_reach(self, artifacts):
+        choices = filter_universe(
+            universe=artifacts.universe,
+            category="OPEN",
+            gender="Gender-Neutral",
+            round_=6,
+            pref_inst_types=None,
+            pref_branch_keywords=None,
+            advanced_rank=6_700,
+            home_state=None,
+            is_pwd=False,
+        )
+        if choices.empty:
+            pytest.skip("No matching rows — skipping")
+
+        choices = assign_rank_sources(choices, main_rank=3_000, advanced_rank=6_700)
+        choices = run_inference(choices, artifacts.model, artifacts.prep_pipeline, artifacts.label_encoders)
+        ranked = build_recommendations(
+            choices=choices,
+            student_rank=3_000,
+            std_map=artifacts.std_map,
+            round_=6,
+            mc_enabled=True,
+            top_n=100,
+        )
+
+        reach = ranked[ranked["recommendation_bucket"] == "ambitious_reach"]
+        assert len(ranked) >= 80
+        assert len(reach) >= 10
+        assert ranked.attrs["bucket_counts"]["ambitious_reach"] >= len(reach)
+        assert (reach["admission_probability"] > 0).all()
+        assert set(reach["rank_type_used"]).issubset({"JEE_MAIN", "JEE_ADVANCED"})
+        assert ((reach["rank_ratio"] > 1.05) & (reach["rank_ratio"] <= 1.40)).all()
+
+        iit_reach = reach[reach["institute_type"] == "IIT"]
+        if not iit_reach.empty:
+            assert (iit_reach["rank_used"] == 6_700).all()
+            assert set(iit_reach["rank_type_used"]) == {"JEE_ADVANCED"}
+            assert ((iit_reach["predicted_closing_rank"] >= 4_020) & (iit_reach["predicted_closing_rank"] <= 6_700)).all()
+
+        main_reach = reach[reach["institute_type"].isin(["NIT", "IIIT", "GFTI"])]
+        if not main_reach.empty:
+            assert (main_reach["rank_used"] == 3_000).all()
+            assert set(main_reach["rank_type_used"]) == {"JEE_MAIN"}
+            assert ((main_reach["predicted_closing_rank"] >= 1_800) & (main_reach["predicted_closing_rank"] <= 3_000)).all()

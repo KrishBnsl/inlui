@@ -88,6 +88,11 @@ def _run_full_pipeline(request: Request, req: PredictRequest) -> tuple[pd.DataFr
         home_state=req.home_state,
         is_pwd=req.is_pwd,
     )
+    logger.info(
+        "Candidate counts: universe=%s after_profile_filters=%s",
+        len(artifacts.universe),
+        len(choices),
+    )
 
     if choices.empty:
         raise HTTPException(
@@ -103,6 +108,10 @@ def _run_full_pipeline(request: Request, req: PredictRequest) -> tuple[pd.DataFr
             choices,
             main_rank=req.main_rank,
             advanced_rank=req.advanced_rank,
+        )
+        logger.info(
+            "Candidate counts after rank-source assignment: %s",
+            len(choices),
         )
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
@@ -175,10 +184,13 @@ def _row_to_item(row: pd.Series, idx: int, student_rank: int) -> RecommendationI
         category=str(row.get("category", "")),
         probability_percent=prob_pct,
         admission_probability=prob,
+        model_probability_percent=float(row.get("model_probability_percent", prob_pct)),
+        calibrated_probability_percent=float(row.get("calibrated_probability_percent", prob_pct)),
         projected_closing_rank=int(row.get("predicted_closing_rank", 0)),
         uncertainty_lower=int(lower) if lower is not None and not pd.isna(lower) else None,
         uncertainty_upper=int(upper) if upper is not None and not pd.isna(upper) else None,
         safety_margin=safety_margin,
+        rank_ratio=float(row.get("rank_ratio")) if row.get("rank_ratio") is not None and not pd.isna(row.get("rank_ratio")) else None,
         confidence_label=str(row.get("confidence_label", "Unknown")),
         explanation=str(row.get("explanation", "")),
         recommendation_score=float(row.get("recommendation_score", 0.0)),
@@ -189,7 +201,7 @@ def _row_to_item(row: pd.Series, idx: int, student_rank: int) -> RecommendationI
         safety_score=float(row.get("safety_score", 0.0)),
         recommendation_bucket=str(row.get("recommendation_bucket", "")) or None,
         rank_used=int(row.get("rank_used", student_rank)),
-        rank_type_used=str(row.get("rank_type_used", "main")),
+        rank_type_used=str(row.get("rank_type_used", "JEE_MAIN")),
         historical_data=historical,
     )
 
@@ -204,6 +216,29 @@ def _build_response(ranked: pd.DataFrame, req: PredictRequest) -> RecommendRespo
     safe_items = [r for r in items if r.recommendation_bucket == "safe_backup"]
     target_items = [r for r in items if r.recommendation_bucket == "best_realistic"]
     reach_items = [r for r in items if r.recommendation_bucket == "ambitious_reach"]
+    bucket_counts = ranked.attrs.get(
+        "bucket_counts",
+        {
+            "safe_backup": len(safe_items),
+            "best_realistic": len(target_items),
+            "ambitious_reach": len(reach_items),
+            "unlikely_reach": 0,
+        },
+    )
+    institute_type_counts = ranked.attrs.get(
+        "institute_type_counts",
+        {"IIT": 0, "NIT": 0, "IIIT": 0, "GFTI": 0},
+    )
+    rank_window_debug = {
+        "main_rank": req.main_rank,
+        "advanced_rank": req.advanced_rank,
+        "main_reach_window": [round(req.main_rank * 0.60), round(req.main_rank * 1.05)],
+        "advanced_reach_window": (
+            [round(req.advanced_rank * 0.60), round(req.advanced_rank * 1.05)]
+            if req.advanced_rank
+            else None
+        ),
+    }
 
     safest_choice = (
         f"{safe_items[0].institute_name} — {safe_items[0].program_name}"
@@ -229,6 +264,9 @@ def _build_response(ranked: pd.DataFrame, req: PredictRequest) -> RecommendRespo
         safe_count=len(safe_items),
         moderate_count=len(target_items),
         ambitious_count=len(reach_items),
+        bucket_counts=bucket_counts,
+        institute_type_counts=institute_type_counts,
+        rank_window_debug=rank_window_debug,
         results=items,
     )
 
@@ -252,6 +290,20 @@ async def predict(request: Request, req: PredictRequest) -> RecommendResponse:
 
     try:
         ranked, _ = _run_full_pipeline(request, req)
+        logger.info(
+            "Recommendation bucket distribution: %s; institute types: %s; returned=%s; rank_windows=%s",
+            ranked.attrs.get("bucket_counts", {}),
+            ranked.attrs.get("institute_type_counts", {}),
+            len(ranked),
+            {
+                "main": [round(req.main_rank * 0.60), round(req.main_rank * 1.05)],
+                "advanced": (
+                    [round(req.advanced_rank * 0.60), round(req.advanced_rank * 1.05)]
+                    if req.advanced_rank
+                    else None
+                ),
+            },
+        )
     except HTTPException:
         raise
     except Exception as exc:

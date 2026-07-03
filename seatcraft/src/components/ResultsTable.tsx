@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Bookmark, BookmarkCheck, Search } from "lucide-react";
 import type { BucketFilter, PredictionResult } from "@/lib/types";
@@ -49,6 +49,25 @@ export default function ResultsTable({
   const [filterType, setFilterType] = useState<FilterType>("ALL");
   const [tierFilter, setTierFilter] = useState<BucketFilter>("ALL");
   const [sortMode, setSortMode] = useState<ResultSortMode>("best_fit");
+
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "development") return;
+    console.table(
+      results.map((result) => ({
+        institute: result.institute_name,
+        program: result.program_name,
+        type: result.institute_type,
+        cutoff: result.projected_closing_rank,
+        probability: result.probability_percent,
+        modelProbability: result.model_probability_percent,
+        bucket: result.recommendation_bucket,
+        confidence: result.confidence_label,
+        rankUsed: result.rank_used,
+        rankType: result.rank_type_used,
+        rankRatio: result.rank_ratio,
+      }))
+    );
+  }, [results]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();

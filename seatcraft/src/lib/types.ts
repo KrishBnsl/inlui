@@ -70,6 +70,8 @@ export interface PredictionResult {
   category: string;
   probability_percent: number;
   admission_probability?: number;
+  model_probability_percent?: number;
+  calibrated_probability_percent?: number;
   projected_closing_rank: number;
   historical_data: HistoricalDataPoint[];
 
@@ -87,7 +89,8 @@ export interface PredictionResult {
   safety_score?: number;
   recommendation_bucket?: RecommendationBucket;
   rank_used?: number;
-  rank_type_used?: "main" | "advanced";
+  rank_type_used?: "JEE_MAIN" | "JEE_ADVANCED" | "main" | "advanced";
+  rank_ratio?: number;
 }
 
 
@@ -102,6 +105,14 @@ export interface SimulationResponse {
   safe_count?: number;
   moderate_count?: number;
   ambitious_count?: number;
+  bucket_counts?: Record<RecommendationBucket, number>;
+  institute_type_counts?: Record<"IIT" | "NIT" | "IIIT" | "GFTI", number>;
+  rank_window_debug?: {
+    main_rank?: number;
+    advanced_rank?: number | null;
+    main_reach_window?: [number, number];
+    advanced_reach_window?: [number, number] | null;
+  };
 }
 
 export type RecommendationBucket =
@@ -130,7 +141,7 @@ export function filterByBucket(
 ): PredictionResult[] {
   const bucket = getBucketForFilter(filter);
   if (!bucket) return results;
-  return results.filter((result) => result.recommendation_bucket === bucket);
+  return results.filter((result) => inferBucket(result) === bucket);
 }
 
 export function getTopBucketChoice(
@@ -138,7 +149,15 @@ export function getTopBucketChoice(
   bucket: RecommendationBucket
 ): PredictionResult | undefined {
   return results
-    .filter((result) => result.recommendation_bucket === bucket)
+    .filter((result) => inferBucket(result) === bucket)
+    .sort((a, b) => (b.recommendation_score ?? 0) - (a.recommendation_score ?? 0))[0];
+}
+
+export function getTopFilteredChoice(
+  results: PredictionResult[],
+  filter: ProbabilityTier
+): PredictionResult | undefined {
+  return filterByBucket(results, filter)
     .sort((a, b) => (b.recommendation_score ?? 0) - (a.recommendation_score ?? 0))[0];
 }
 
@@ -150,4 +169,24 @@ export function getProbabilityTier(probability: number): ProbabilityTier {
   if (probability >= 70) return "safe";
   if (probability >= 35) return "target";
   return "reach";
+}
+
+export function inferBucket(result: PredictionResult): RecommendationBucket {
+  if (result.recommendation_bucket) return result.recommendation_bucket;
+  if (result.confidence_label === "Safe") return "safe_backup";
+  if (result.confidence_label === "Moderate") return "best_realistic";
+  if (result.confidence_label === "Ambitious") return "ambitious_reach";
+
+  const probability = result.probability_percent;
+  if (probability >= 70) return "safe_backup";
+  if (probability >= 35) return "best_realistic";
+  return "ambitious_reach";
+}
+
+export function getTierForResult(result: PredictionResult): ProbabilityTier {
+  const bucket = inferBucket(result);
+  if (bucket === "safe_backup") return "safe";
+  if (bucket === "best_realistic") return "target";
+  if (bucket === "ambitious_reach") return "reach";
+  return getProbabilityTier(result.probability_percent);
 }

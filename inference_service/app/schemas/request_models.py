@@ -90,10 +90,10 @@ class PredictRequest(BaseModel):
         ),
     )
     top_n: int = Field(
-        default=30,
+        default=100,
         ge=1,
         le=200,
-        description="Maximum number of recommendations to return (sorted by score).",
+        description="Maximum number of recommendations to return (balanced by bucket).",
     )
     sort_mode: Literal[
         "best_fit",

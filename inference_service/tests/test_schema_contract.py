@@ -4,7 +4,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.schemas.request_models import PredictRequest
-from app.schemas.response_models import RecommendationItem
+from app.schemas.response_models import RecommendationItem, RecommendResponse
 
 
 def test_predict_request_matches_frontend_contract():
@@ -24,6 +24,10 @@ def test_predict_request_matches_frontend_contract():
     assert expected <= set(PredictRequest.model_fields)
 
 
+def test_predict_request_defaults_to_hundred_recommendations():
+    assert PredictRequest.model_fields["top_n"].default == 100
+
+
 def test_recommendation_item_matches_typescript_contract():
     expected = {
         "id",
@@ -35,6 +39,8 @@ def test_recommendation_item_matches_typescript_contract():
         "projected_closing_rank",
         "probability_percent",
         "admission_probability",
+        "model_probability_percent",
+        "calibrated_probability_percent",
         "recommendation_score",
         "fit_score",
         "competitiveness_score",
@@ -42,6 +48,7 @@ def test_recommendation_item_matches_typescript_contract():
         "branch_score",
         "safety_score",
         "safety_margin",
+        "rank_ratio",
         "confidence_label",
         "recommendation_bucket",
         "uncertainty_lower",
@@ -51,3 +58,9 @@ def test_recommendation_item_matches_typescript_contract():
         "rank_type_used",
     }
     assert expected <= set(RecommendationItem.model_fields)
+
+
+def test_recommend_response_includes_bucket_counts():
+    assert "bucket_counts" in RecommendResponse.model_fields
+    assert "institute_type_counts" in RecommendResponse.model_fields
+    assert "rank_window_debug" in RecommendResponse.model_fields

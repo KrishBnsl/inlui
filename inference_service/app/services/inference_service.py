@@ -200,7 +200,7 @@ def assign_rank_sources(
         raise ValueError("advanced_rank is required for IIT recommendations")
 
     choices["rank_used"] = np.where(is_iit, advanced_rank, main_rank).astype(int)
-    choices["rank_type_used"] = np.where(is_iit, "advanced", "main")
+    choices["rank_type_used"] = np.where(is_iit, "JEE_ADVANCED", "JEE_MAIN")
     return choices
 
 

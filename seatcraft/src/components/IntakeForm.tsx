@@ -93,6 +93,7 @@ export default function IntakeForm({ onSubmit, isLoading }: IntakeFormProps) {
       home_state: homeState as IndianState,
       gender,
       is_pwd: isPwd,
+      top_n: 100,
     });
   };
 

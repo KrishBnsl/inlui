@@ -24,13 +24,12 @@ const cardVariants: Variants = {
 export default function SummaryCards({
   total_options,
   safest_choice,
-  top_upgrade,
   results,
 }: SummaryCardsProps) {
   const safestBucketChoice = getTopBucketChoice(results, "safe_backup");
   const reachBucketChoice = getTopBucketChoice(results, "ambitious_reach");
   const safestValue = formatChoiceName(safestBucketChoice, safest_choice);
-  const reachValue = formatChoiceName(reachBucketChoice, top_upgrade);
+  const reachValue = formatChoiceName(reachBucketChoice, "No realistic reach found");
 
   const cards = [
     {

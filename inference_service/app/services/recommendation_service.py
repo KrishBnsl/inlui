@@ -40,6 +40,16 @@ BRANCH_SCORES = {
     "mining": 0.44,
 }
 
+DEFAULT_TOP_N = 100
+BUCKET_QUOTAS = {
+    "safe_backup": 30,
+    "best_realistic": 50,
+    "ambitious_reach": 20,
+}
+SAFE_MAX_RATIO = 0.80
+TARGET_MAX_RATIO = 1.05
+REACH_MAX_RATIO = 1.40
+
 
 # ── Monte Carlo ─────────────────────────────────────────────────────────────────
 
@@ -125,6 +135,24 @@ def _classify(prob: float) -> str:
     return "Ambitious"
 
 
+def _rank_ratio(rank: float, predicted: float) -> float:
+    return max(float(rank), 1.0) / max(float(predicted), 1.0)
+
+
+def _calibrate_probability(model_prob: float, rank_ratio: float) -> float:
+    if rank_ratio <= SAFE_MAX_RATIO:
+        floor = 0.80
+    elif rank_ratio <= TARGET_MAX_RATIO:
+        floor = 0.45
+    elif rank_ratio <= 1.20:
+        floor = 0.25
+    elif rank_ratio <= REACH_MAX_RATIO:
+        floor = 0.10
+    else:
+        floor = 0.0
+    return max(float(model_prob), floor)
+
+
 def _bucket(prob: float, margin: float, rank: float, predicted: float) -> str:
     """Recommendation grouping used by the UI/RAG layer.
 
@@ -132,48 +160,138 @@ def _bucket(prob: float, margin: float, rank: float, predicted: float) -> str:
     little behind the projected cutoff or has non-trivial odds. Far-off,
     near-zero options are marked separately and excluded from normal results.
     """
-    rank = max(float(rank), 1.0)
-    predicted = max(float(predicted), 1.0)
-    worse_than_cutoff_ratio = max((rank - predicted) / predicted, 0.0)
-    better_than_cutoff_ratio = max(margin / predicted, 0.0)
-    close_to_cutoff_ratio = abs(rank - predicted) / predicted
-
-    if prob < 0.10 or (prob < 0.15 and worse_than_cutoff_ratio > 0.40):
-        return "unlikely_reach"
-    if prob >= 0.80 or better_than_cutoff_ratio >= 0.25:
+    ratio = _rank_ratio(rank, predicted)
+    if ratio <= SAFE_MAX_RATIO:
         return "safe_backup"
-    if worse_than_cutoff_ratio > 0 and (prob <= 0.50 or worse_than_cutoff_ratio <= 0.40):
-        return "ambitious_reach"
-    if prob >= 0.45 or close_to_cutoff_ratio <= 0.18:
+    if ratio <= TARGET_MAX_RATIO:
         return "best_realistic"
-    if prob >= 0.15 and worse_than_cutoff_ratio <= 0.40:
+    if ratio <= REACH_MAX_RATIO:
         return "ambitious_reach"
     return "unlikely_reach"
 
 
-def _ensure_bucket_coverage(choices: pd.DataFrame, top_n: int) -> pd.DataFrame:
-    """Keep the default list balanced when realistic bucket candidates exist."""
+def _bucket_counts(choices: pd.DataFrame) -> dict[str, int]:
+    counts = choices.get("recommendation_bucket", pd.Series(dtype=str)).value_counts()
+    return {
+        "safe_backup": int(counts.get("safe_backup", 0)),
+        "best_realistic": int(counts.get("best_realistic", 0)),
+        "ambitious_reach": int(counts.get("ambitious_reach", 0)),
+        "unlikely_reach": int(counts.get("unlikely_reach", 0)),
+    }
+
+
+def _institute_type_counts(choices: pd.DataFrame) -> dict[str, int]:
+    counts = choices.get("institute_type", pd.Series(dtype=str)).value_counts()
+    return {
+        "IIT": int(counts.get("IIT", 0)),
+        "NIT": int(counts.get("NIT", 0)),
+        "IIIT": int(counts.get("IIIT", 0)),
+        "GFTI": int(counts.get("GFTI", 0)),
+    }
+
+
+def _scaled_bucket_quotas(top_n: int) -> dict[str, int]:
+    if top_n <= 0:
+        return {bucket: 0 for bucket in BUCKET_QUOTAS}
+    if top_n == sum(BUCKET_QUOTAS.values()):
+        return BUCKET_QUOTAS.copy()
+
+    total = sum(BUCKET_QUOTAS.values())
+    quotas = {
+        bucket: int(top_n * quota / total)
+        for bucket, quota in BUCKET_QUOTAS.items()
+    }
+    remaining = top_n - sum(quotas.values())
+    for bucket in sorted(
+        BUCKET_QUOTAS,
+        key=lambda name: (top_n * BUCKET_QUOTAS[name] / total) - quotas[name],
+        reverse=True,
+    ):
+        if remaining <= 0:
+            break
+        quotas[bucket] += 1
+        remaining -= 1
+    return quotas
+
+
+def _select_balanced_recommendations(choices: pd.DataFrame, top_n: int) -> pd.DataFrame:
+    """Select a quota-balanced final list from the full scored candidate set."""
     if top_n <= 0 or choices.empty:
         return choices.head(top_n)
 
-    selected = choices.head(top_n).copy()
+    quotas = _scaled_bucket_quotas(top_n)
+    selected_parts = []
+    selected_ids: set[int] = set()
+
+    for bucket, quota in quotas.items():
+        bucket_rows = choices[choices["recommendation_bucket"] == bucket]
+        if bucket_rows.empty or quota <= 0:
+            continue
+        take = bucket_rows.head(quota)
+        selected_parts.append(take)
+        selected_ids.update(take["_recommendation_row_id"].astype(int).tolist())
+
+    selected = (
+        pd.concat(selected_parts, ignore_index=False)
+        if selected_parts
+        else choices.head(0).copy()
+    )
+
     if len(selected) < top_n:
-        return selected
+        remainder = choices[
+            ~choices["_recommendation_row_id"].isin(selected_ids)
+        ].head(top_n - len(selected))
+        selected = pd.concat([selected, remainder], ignore_index=False)
+        selected_ids.update(remainder["_recommendation_row_id"].astype(int).tolist())
 
-    selected_ids = set(selected["_recommendation_row_id"])
-    required = ["safe_backup", "best_realistic", "ambitious_reach"]
+    # If both JEE Main and JEE Advanced candidates exist, keep both represented.
+    if "rank_type_used" in choices.columns and len(selected) >= top_n:
+        available_rank_types = set(choices["rank_type_used"].dropna().astype(str))
+        selected_rank_types = set(selected["rank_type_used"].dropna().astype(str))
+        for rank_type in sorted(available_rank_types - selected_rank_types):
+            candidate = choices[
+                (choices["rank_type_used"].astype(str) == rank_type)
+                & ~choices["_recommendation_row_id"].isin(selected_ids)
+            ].head(1)
+            if candidate.empty:
+                continue
 
-    for bucket in required:
+            replaceable = selected[
+                selected["rank_type_used"].astype(str).map(
+                    selected["rank_type_used"].astype(str).value_counts()
+                )
+                > 1
+            ]
+            if replaceable.empty:
+                continue
+
+            drop_id = replaceable.iloc[-1]["_recommendation_row_id"]
+            selected = pd.concat(
+                [
+                    selected[selected["_recommendation_row_id"] != drop_id],
+                    candidate,
+                ],
+                ignore_index=False,
+            )
+            selected_ids = set(selected["_recommendation_row_id"].astype(int).tolist())
+
+    for bucket in BUCKET_QUOTAS:
         if bucket in set(selected["recommendation_bucket"]):
             continue
-
-        candidate = choices[choices["recommendation_bucket"] == bucket].head(1)
-        if candidate.empty:
+        candidate = choices[
+            (choices["recommendation_bucket"] == bucket)
+            & ~choices["_recommendation_row_id"].isin(selected_ids)
+        ].head(1)
+        if candidate.empty or len(selected) < top_n:
+            if not candidate.empty:
+                selected = pd.concat([selected, candidate], ignore_index=False)
             continue
 
         replaceable = selected[
-            ~selected["recommendation_bucket"].isin(required)
-            | selected["recommendation_bucket"].duplicated(keep="first")
+            selected["recommendation_bucket"].map(
+                selected["recommendation_bucket"].value_counts()
+            )
+            > 1
         ]
         if replaceable.empty:
             continue
@@ -186,7 +304,7 @@ def _ensure_bucket_coverage(choices: pd.DataFrame, top_n: int) -> pd.DataFrame:
             ],
             ignore_index=False,
         )
-        selected_ids = set(selected["_recommendation_row_id"])
+        selected_ids = set(selected["_recommendation_row_id"].astype(int).tolist())
 
     return selected.sort_values("_sort_position").head(top_n)
 
@@ -244,7 +362,7 @@ def build_recommendations(
     std_map: pd.DataFrame,
     round_: int,
     mc_enabled: bool = True,
-    top_n: int = 30,
+    top_n: int = DEFAULT_TOP_N,
     sort_mode: str = "best_fit",
 ) -> pd.DataFrame:
     """
@@ -274,6 +392,8 @@ def build_recommendations(
         Ranked recommendations with all metadata columns attached.
     """
     if choices.empty:
+        choices.attrs["bucket_counts"] = _bucket_counts(choices)
+        choices.attrs["institute_type_counts"] = _institute_type_counts(choices)
         return choices
 
     choices = choices.copy()
@@ -309,7 +429,21 @@ def build_recommendations(
         ci_median = predicted
         ci_upper = predicted
 
-    choices["admission_probability"] = probs
+    rank_ratios = np.asarray(rank_used, dtype=float) / np.maximum(predicted, 1.0)
+    calibrated_probs = np.asarray(
+        [
+            _calibrate_probability(model_prob, ratio)
+            for model_prob, ratio in zip(probs, rank_ratios)
+        ],
+        dtype=float,
+    )
+
+    choices["model_admission_probability"] = probs
+    choices["admission_probability"] = calibrated_probs
+    choices["model_probability_percent"] = (probs * 100.0).round(1)
+    choices["calibrated_probability_percent"] = (calibrated_probs * 100.0).round(1)
+    choices["rank_ratio"] = rank_ratios
+    choices["probability_was_calibrated"] = calibrated_probs > (probs + 1e-9)
     choices["ci_lower_5"] = np.maximum(1, ci_lower).astype(int)
     choices["expected_cutoff_50"] = ci_median.astype(int)
     choices["ci_upper_95"] = ci_upper.astype(int)
@@ -333,9 +467,9 @@ def build_recommendations(
     branch = choices["program"].map(_branch_score).to_numpy(dtype=float)
     desirability = (0.45 * competitiveness) + (0.25 * institute) + (0.30 * branch)
 
-    admissibility = _admissibility_score(probs)
-    fit = _fit_score(predicted, rank_used, probs)
-    safety = probs * np.clip(choices["margin"].to_numpy(dtype=float) / np.maximum(predicted, 1), 0, 1)
+    admissibility = _admissibility_score(calibrated_probs)
+    fit = _fit_score(predicted, rank_used, calibrated_probs)
+    safety = calibrated_probs * np.clip(choices["margin"].to_numpy(dtype=float) / np.maximum(predicted, 1), 0, 1)
 
     choices["competitiveness_score"] = competitiveness
     choices["institute_score"] = institute
@@ -357,17 +491,27 @@ def build_recommendations(
             choices["predicted_closing_rank"],
         )
     ]
+    bucket_counts = _bucket_counts(choices)
+    institute_type_counts = _institute_type_counts(choices)
 
     # ── 4. Classify ─────────────────────────────────────────────────────────
     choices["confidence_label"] = choices["admission_probability"].map(_classify)
 
     # ── 5. Explanations ──────────────────────────────────────────────────────
     choices = attach_explanations(choices, int(np.median(rank_used)))
+    calibrated_mask = choices["probability_was_calibrated"].fillna(False)
+    choices.loc[calibrated_mask, "explanation"] = (
+        choices.loc[calibrated_mask, "explanation"].astype(str)
+        + " Probability adjusted using cutoff-distance heuristic because model probability was under-calibrated near the cutoff."
+    )
 
     # ── 6. Sort and trim ─────────────────────────────────────────────────────
     choices = choices[choices["recommendation_bucket"] != "unlikely_reach"].copy()
     if choices.empty:
-        return choices.drop(columns=["_recommendation_row_id"], errors="ignore").reset_index(drop=True)
+        result = choices.drop(columns=["_recommendation_row_id"], errors="ignore").reset_index(drop=True)
+        result.attrs["bucket_counts"] = bucket_counts
+        result.attrs["institute_type_counts"] = institute_type_counts
+        return result
 
     if sort_mode == "highest_probability":
         choices = choices.sort_values(["admission_probability", "recommendation_score"], ascending=[False, False])
@@ -379,7 +523,10 @@ def build_recommendations(
         choices = choices.sort_values("recommendation_score", ascending=False)
     choices["_sort_position"] = np.arange(len(choices))
     if sort_mode == "best_fit":
-        choices = _ensure_bucket_coverage(choices, top_n)
+        choices = _select_balanced_recommendations(choices, top_n)
     else:
         choices = choices.head(top_n)
-    return choices.drop(columns=["_recommendation_row_id", "_sort_position"], errors="ignore").reset_index(drop=True)
+    result = choices.drop(columns=["_recommendation_row_id", "_sort_position"], errors="ignore").reset_index(drop=True)
+    result.attrs["bucket_counts"] = bucket_counts
+    result.attrs["institute_type_counts"] = institute_type_counts
+    return result

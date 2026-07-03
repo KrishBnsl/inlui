@@ -2,7 +2,7 @@
 
 import { X } from "lucide-react";
 import type { PredictionResult } from "@/lib/types";
-import { getProbabilityTier } from "@/lib/types";
+import { getTierForResult } from "@/lib/types";
 
 interface ChoiceListProps {
   items: PredictionResult[];
@@ -27,7 +27,7 @@ export default function ChoiceList({
 }: ChoiceListProps) {
   const counts = items.reduce(
     (acc, item) => {
-      acc[getProbabilityTier(item.probability_percent)] += 1;
+      acc[getTierForResult(item)] += 1;
       return acc;
     },
     { safe: 0, target: 0, reach: 0 }

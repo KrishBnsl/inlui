@@ -5,6 +5,8 @@ import {
   filterByBucket,
   formatChoiceName,
   getTopBucketChoice,
+  getTierForResult,
+  inferBucket,
   type PredictionResult,
   type RecommendationBucket,
 } from "./types.ts";
@@ -129,4 +131,77 @@ test("best reach card and reach table use the same bucket source", () => {
   assert.equal(cardReach?.id, "reach-best");
   assert.equal(tableReach.some((row) => row.id === cardReach?.id), true);
   assert.equal(formatChoiceName(cardReach), "Reach A — Computer Science");
+});
+
+test("reach filter supports unbucketed legacy results by probability tier", () => {
+  const rows = [
+    result("safe", 95, 70, 60_000, "Safe College", "Civil Engineering"),
+    result("target", 65, 90, 28_000, "Target College", "Electrical Engineering"),
+    result("reach", 30, 80, 20_000, "Reach College", "Computer Science"),
+  ];
+
+  const tableReach = filterByBucket(rows, "reach");
+  const cardReach = getTopBucketChoice(rows, "ambitious_reach");
+
+  assert.deepEqual(tableReach.map((row) => row.id), ["reach"]);
+  assert.equal(cardReach?.id, "reach");
+});
+
+test("best reach card does not show a fake top-upgrade fallback", () => {
+  const rows = [
+    result("safe", 95, 70, 60_000, "Safe College", "Civil Engineering", 0.9, "safe_backup"),
+    result("target", 65, 90, 28_000, "Target College", "Electrical Engineering", 0.2, "best_realistic"),
+  ];
+
+  const tableReach = filterByBucket(rows, "reach");
+  const cardReach = getTopBucketChoice(rows, "ambitious_reach");
+
+  assert.deepEqual(tableReach, []);
+  assert.equal(formatChoiceName(cardReach, "No realistic reach found"), "No realistic reach found");
+});
+
+test("infer bucket falls back through confidence label and probability", () => {
+  assert.equal(inferBucket({ ...result("safe", 20, 1, 10_000), confidence_label: "Safe" }), "safe_backup");
+  assert.equal(inferBucket({ ...result("target", 20, 1, 10_000), confidence_label: "Moderate" }), "best_realistic");
+  assert.equal(inferBucket({ ...result("reach", 80, 1, 10_000), confidence_label: "Ambitious" }), "ambitious_reach");
+  assert.equal(inferBucket(result("prob-reach", 30, 1, 10_000)), "ambitious_reach");
+});
+
+test("visible tier state prefers backend bucket over raw probability", () => {
+  const realisticReach = result(
+    "reach",
+    55,
+    80,
+    20_000,
+    "Reach College",
+    "Computer Science",
+    0,
+    "ambitious_reach"
+  );
+
+  assert.equal(getTierForResult(realisticReach), "reach");
+});
+
+test("hundred-row result set filters to twenty realistic reach rows", () => {
+  const rows = [
+    ...Array.from({ length: 30 }, (_, index) =>
+      result(`safe-${index}`, 90, 90 - index, 60_000, `Safe College ${index}`, "Civil Engineering", 0.9, "safe_backup")
+    ),
+    ...Array.from({ length: 50 }, (_, index) =>
+      result(`target-${index}`, 55, 80 - index, 3_100, `Target College ${index}`, "Electrical Engineering", 0.2, "best_realistic")
+    ),
+    ...Array.from({ length: 20 }, (_, index) =>
+      result(`reach-${index}`, 10 + index, 70 - index, 2_500, `Reach College ${index}`, "Computer Science", 0, "ambitious_reach")
+    ),
+  ];
+
+  const allRows = filterByBucket(rows, "ALL");
+  const reachRows = filterByBucket(rows, "reach");
+  const cardReach = getTopBucketChoice(rows, "ambitious_reach");
+
+  assert.equal(allRows.length, 100);
+  assert.equal(reachRows.length, 20);
+  assert.equal(reachRows.every((row) => row.recommendation_bucket === "ambitious_reach"), true);
+  assert.equal(reachRows.every((row) => row.probability_percent > 0), true);
+  assert.equal(cardReach?.id, reachRows[0].id);
 });

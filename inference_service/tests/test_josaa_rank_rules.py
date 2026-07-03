@@ -63,11 +63,11 @@ def test_iit_uses_advanced_rank_and_non_iits_use_main_rank_when_both_exist():
 
     by_type = ranked_source.set_index("institute_type")
     assert by_type.loc["IIT", "rank_used"] == 1_000
-    assert by_type.loc["IIT", "rank_type_used"] == "advanced"
+    assert by_type.loc["IIT", "rank_type_used"] == "JEE_ADVANCED"
     assert by_type.loc["NIT", "rank_used"] == 25_000
     assert by_type.loc["IIIT", "rank_used"] == 25_000
     assert by_type.loc["GFTI", "rank_used"] == 25_000
-    assert set(by_type.loc[["NIT", "IIIT", "GFTI"], "rank_type_used"]) == {"main"}
+    assert set(by_type.loc[["NIT", "IIIT", "GFTI"], "rank_type_used"]) == {"JEE_MAIN"}
 
 
 def test_main_rank_is_required_for_non_iit_recommendations():
