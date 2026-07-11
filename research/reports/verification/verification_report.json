@@ -1,0 +1,451 @@
+{
+  "commands": [
+    {
+      "command": "/home/mehul/repos/inlui/.venv/bin/python -m compileall -q research packages apps/inference-api apps/rag-api scripts",
+      "duration_seconds": 0.122,
+      "exit_code": 0,
+      "name": "Python compile",
+      "reason": null,
+      "status": "passed",
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "command": "/home/mehul/repos/inlui/.venv/bin/python -m ruff check research packages apps/inference-api apps/rag-api scripts --select E9,F63,F7,F82",
+      "duration_seconds": 0.106,
+      "exit_code": 0,
+      "name": "Python lint",
+      "reason": null,
+      "status": "passed",
+      "stderr": "",
+      "stdout": "All checks passed!\n"
+    },
+    {
+      "command": "/home/mehul/repos/inlui/.venv/bin/python scripts/check_assets.py",
+      "duration_seconds": 0.493,
+      "exit_code": 0,
+      "name": "Asset manifest",
+      "reason": null,
+      "status": "passed",
+      "stderr": "",
+      "stdout": "ASSET CHECK: PASSED (19 files match the versioned SHA-256 manifest)\nRESEARCH EVIDENCE STATUS: EXPLORATORY (provenance=unverified, license=unresolved)\n"
+    },
+    {
+      "command": "/home/mehul/repos/inlui/.venv/bin/python scripts/verify_readme.py",
+      "duration_seconds": 9.95,
+      "exit_code": 0,
+      "name": "README contract",
+      "reason": null,
+      "status": "passed",
+      "stderr": "",
+      "stdout": "README CONTRACT: PASSED (1349 assertions)\n"
+    },
+    {
+      "command": "/home/mehul/repos/inlui/.venv/bin/python -m pytest research/pipeline/tests -q",
+      "duration_seconds": 13.312,
+      "exit_code": 0,
+      "name": "Research tests",
+      "reason": null,
+      "status": "passed",
+      "stderr": "",
+      "stdout": "..............................                                           [100%]\n=============================== warnings summary ===============================\nresearch/pipeline/tests/test_research_methodology.py::test_strict_figures_have_canonical_names_and_source_date_epoch_bytes\n  /home/mehul/repos/inlui/.venv/lib/python3.12/site-packages/matplotlib/_mathtext.py:45: PyparsingDeprecationWarning: 'enablePackrat' deprecated - use 'enable_packrat'\n    ParserElement.enablePackrat()\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n30 passed, 1 warning in 11.01s\n"
+    },
+    {
+      "command": "/home/mehul/repos/inlui/.venv/bin/python -m pytest apps/inference-api/tests -q",
+      "duration_seconds": 28.893,
+      "exit_code": 0,
+      "name": "Inference API tests",
+      "reason": null,
+      "status": "passed",
+      "stderr": "",
+      "stdout": "........................................................................ [ 53%]\n...............................................................          [100%]\n135 passed in 24.75s\n"
+    },
+    {
+      "command": "/home/mehul/repos/inlui/.venv/bin/python -m pytest apps/rag-api/tests -q",
+      "duration_seconds": 3.803,
+      "exit_code": 0,
+      "name": "RAG mocked tests",
+      "reason": null,
+      "status": "passed",
+      "stderr": "",
+      "stdout": "...........................                                              [100%]\n27 passed in 0.61s\n"
+    },
+    {
+      "command": "npm test",
+      "duration_seconds": 1.881,
+      "exit_code": 0,
+      "name": "Frontend unit tests",
+      "reason": null,
+      "status": "passed",
+      "stderr": "",
+      "stdout": "\n> seatcraft@0.1.0 test\n> npm run test:unit\n\n\n> seatcraft@0.1.0 test:unit\n> node --test --experimental-strip-types src/lib/*.test.ts\n\n\u2714 best fit sorts by recommendation score before probability (3.778342ms)\n\u2714 highest likelihood estimate is explicit opt-in (0.518808ms)\n\u2714 most competitive cutoff sorts by lower projected cutoff (0.613384ms)\n\u2714 safest backup sorts by safety score (0.44005ms)\n\u2714 branch name sorts alphabetically after institute modes (25.316851ms)\n\u2714 all expected sort labels are present (2.158651ms)\n\u2714 frontend contract accepts every backend-supported quota (0.587491ms)\n\u2714 odds filters use backend recommendation buckets (1.275842ms)\n\u2714 best reach card and reach table use the same bucket source (1.076075ms)\n\u2714 reach filter supports unbucketed legacy results by probability tier (0.8814ms)\n\u2714 best reach card does not show a fake top-upgrade fallback (0.525634ms)\n\u2714 infer bucket falls back through confidence label and probability (0.343958ms)\n\u2714 visible tier state prefers backend bucket over raw probability (0.432792ms)\n\u2714 hundred-row result set filters to twenty realistic reach rows (1.06145ms)\n\u2139 tests 14\n\u2139 suites 0\n\u2139 pass 14\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 365.487659\n"
+    },
+    {
+      "command": "npm run lint",
+      "duration_seconds": 15.964,
+      "exit_code": 0,
+      "name": "Frontend lint",
+      "reason": null,
+      "status": "passed",
+      "stderr": "",
+      "stdout": "\n> seatcraft@0.1.0 lint\n> eslint\n\n"
+    },
+    {
+      "command": "npm run typecheck",
+      "duration_seconds": 9.162,
+      "exit_code": 0,
+      "name": "Frontend type check",
+      "reason": null,
+      "status": "passed",
+      "stderr": "",
+      "stdout": "\n> seatcraft@0.1.0 typecheck\n> tsc --noEmit\n\n"
+    },
+    {
+      "command": "npm audit --omit=dev",
+      "duration_seconds": 3.482,
+      "exit_code": 0,
+      "name": "Frontend production dependency audit",
+      "reason": null,
+      "status": "passed",
+      "stderr": "",
+      "stdout": "found 0 vulnerabilities\n"
+    },
+    {
+      "command": "npm run build",
+      "duration_seconds": 23.37,
+      "exit_code": 0,
+      "name": "Frontend build",
+      "reason": null,
+      "status": "passed",
+      "stderr": "",
+      "stdout": "\n> seatcraft@0.1.0 build\n> next build\n\n\u25b2 Next.js 16.2.10 (Turbopack)\n\n  Creating an optimized production build ...\n\u2713 Compiled successfully in 8.3s\n  Running TypeScript ...\n  Finished TypeScript in 8.5s ...\n  Collecting page data using 5 workers ...\n  Generating static pages using 5 workers (0/4) ...\n  Generating static pages using 5 workers (1/4) \n  Generating static pages using 5 workers (2/4) \n  Generating static pages using 5 workers (3/4) \n\u2713 Generating static pages using 5 workers (4/4) in 1124ms\n  Finalizing page optimization ...\n\nRoute (app)\n\u250c \u25cb /\n\u2514 \u25cb /_not-found\n\n\n\u25cb  (Static)  prerendered as static content\n\n"
+    },
+    {
+      "command": "npm run test:e2e",
+      "duration_seconds": 59.216,
+      "exit_code": 0,
+      "name": "Playwright E2E",
+      "reason": null,
+      "status": "passed",
+      "stderr": "",
+      "stdout": "\n> seatcraft@0.1.0 pretest:e2e\n> node scripts/clean-next-cache.mjs\n\nCleared /home/mehul/repos/inlui/apps/web/.next before mocked E2E compilation.\n\n> seatcraft@0.1.0 test:e2e\n> playwright test\n\n\nRunning 7 tests using 1 worker\n\n[1/7] [chromium] \u203a e2e/seatcraft.mock.spec.ts:122:1 \u203a submits the NEXT_PUBLIC_ML_URL predict contract and renders transparent results\n[2/7] [chromium] \u203a e2e/seatcraft.mock.spec.ts:177:1 \u203a filters and sorts backend buckets and persists the choice list locally\n[3/7] [chromium] \u203a e2e/seatcraft.mock.spec.ts:233:1 \u203a advisor checks RAG health, uploads a source, asks with ML context, and displays retrieved excerpts\n[4/7] [chromium] \u203a e2e/seatcraft.mock.spec.ts:317:1 \u203a invalid intake and backend failures stay visible without fake recommendations\n[5/7] [chromium] \u203a e2e/seatcraft.mock.spec.ts:352:1 \u203a RAG health and ask failures are explicit\n[6/7] [chromium] \u203a e2e/seatcraft.mock.spec.ts:368:1 \u203a configured but degraded RAG reports the backend reason accurately\n[7/7] [chromium] \u203a e2e/seatcraft.mock.spec.ts:394:1 \u203a mobile results expose the same filters and save control\n  7 passed (57.3s)\n"
+    },
+    {
+      "command": "docker compose config --quiet",
+      "duration_seconds": 1.744,
+      "exit_code": 0,
+      "name": "Docker Compose config",
+      "reason": null,
+      "status": "passed",
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "command": "/home/mehul/repos/inlui/.venv/bin/python scripts/scan_secrets.py --history",
+      "duration_seconds": 3.041,
+      "exit_code": 0,
+      "name": "Secret scan",
+      "reason": null,
+      "status": "passed",
+      "stderr": "",
+      "stdout": "SECRET SCAN: PASSED (209 versioned/working-tree files inspected; 34 commits inspected)\n"
+    },
+    {
+      "command": "docker compose config --services",
+      "duration_seconds": 1.176,
+      "exit_code": 0,
+      "name": "Default Compose services",
+      "reason": null,
+      "status": "passed",
+      "stderr": "",
+      "stdout": "inference-api\nrag-api\nweb\n"
+    },
+    {
+      "command": "/home/mehul/repos/inlui/.venv/bin/python scripts/verify_gemini.py",
+      "duration_seconds": 7.002,
+      "exit_code": 0,
+      "name": "Live Gemini",
+      "reason": null,
+      "status": "passed",
+      "stderr": "",
+      "stdout": "LIVE GEMINI EMBEDDING TEST: SUCCESS provider=Google Gemini model=models/gemini-embedding-2 latency_ms=1502 timestamp=2026-07-11T10:07:36+00:00\nLIVE GEMINI CHAT TEST: SUCCESS provider=Google Gemini model=gemini-2.5-flash latency_ms=1888 timestamp=2026-07-11T10:07:38+00:00\nLIVE GEMINI TEST: SUCCESS provider=Google Gemini latency_ms=3390 timestamp=2026-07-11T10:07:38+00:00\n"
+    }
+  ],
+  "environment": {
+    "docker_compose": "2.40.3+ds1-0ubuntu1~24.04.1",
+    "fastapi": "0.115.12",
+    "node": "v24.16.0",
+    "npm": "11.13.0",
+    "numpy": "1.26.4",
+    "pandas": "2.2.3",
+    "platform": "Linux-5.15.167.4-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "pydantic": "2.11.4",
+    "pytest": "8.3.5",
+    "python": "3.12.3",
+    "scikit-learn": "1.6.1"
+  },
+  "generated_from_commit": "ee751d0f236961f612d867864d68abbb1d39d9ab",
+  "git_commit": "ee751d0f236961f612d867864d68abbb1d39d9ab",
+  "git_worktree_dirty": true,
+  "known_blockers": [
+    "Fresh-clone assets: blocked_pending_provenance_verified_source_data. Place provenance-verified JoSAA round files under research/data/ and run `.venv/bin/python -m research.pipeline.preprocessing --data-dir research/data`; then rerun the documented research_evaluation.py command.",
+    "Source asset research/data/processed/josaa_cleaned.csv has provenance=unverified and license=unresolved."
+  ],
+  "live_gemini_status": "PASSED",
+  "manifest": {
+    "data_cutoff_year": 2025,
+    "figures": [
+      {
+        "bytes": 135201,
+        "committed_expected": true,
+        "path": "research/reports/figures/strict_pred_vs_actual.png",
+        "role": "strict_research_figure",
+        "sha256": "d5d24ef8b44cb8ad2a972b0db134e59551aa45abd400f1b8a22e95b8ee17bebd"
+      },
+      {
+        "bytes": 51902,
+        "committed_expected": true,
+        "path": "research/reports/figures/strict_residual_distribution.png",
+        "role": "strict_research_figure",
+        "sha256": "3cccd7f6b31d03eadd2c7c0c760cce8c6f898f656cd8e0a894981a3e6c9dee04"
+      },
+      {
+        "bytes": 52646,
+        "committed_expected": true,
+        "path": "research/reports/figures/strict_error_by_year.png",
+        "role": "strict_research_figure",
+        "sha256": "c73777461439cee4fe261f168d1abc953fe8030dd6a156b944f5cd593fb82d42"
+      },
+      {
+        "bytes": 38730,
+        "committed_expected": true,
+        "path": "research/reports/figures/strict_error_by_institute_type.png",
+        "role": "strict_research_figure",
+        "sha256": "0c42062d0bf76792e908856a1ced08b686fbb68e68e095d7ba2e7aa96bc718c0"
+      },
+      {
+        "bytes": 44404,
+        "committed_expected": true,
+        "path": "research/reports/figures/strict_interval_coverage.png",
+        "role": "strict_research_figure",
+        "sha256": "812d3575f44ed50a2f91e1306508e6561fc2d08f63313c821d92ac0e46c2a9e4"
+      },
+      {
+        "bytes": 56586,
+        "committed_expected": true,
+        "path": "research/reports/figures/strict_ablation.png",
+        "role": "strict_research_figure",
+        "sha256": "47ad5abaf6cf8c8a6406972a637b224280d95fd99c375a8633f8dfda5ec89380"
+      }
+    ],
+    "fresh_clone_status": "blocked_pending_provenance_verified_source_data",
+    "generated_at_utc": "2026-07-03T15:39:50Z",
+    "generated_from_commit": "ee751d0f236961f612d867864d68abbb1d39d9ab",
+    "generated_serving_artifacts": [
+      {
+        "bytes": 336,
+        "committed_expected": false,
+        "path": "research/artifacts/pre_counselling_model.joblib",
+        "role": "generated_asset",
+        "sha256": "853816b3481e3d618e1530499101d8b995e742c428e15c5f2c48594a0856da24"
+      },
+      {
+        "bytes": 14540609,
+        "committed_expected": false,
+        "path": "research/artifacts/inference_universe.csv",
+        "role": "generated_asset",
+        "sha256": "d9645f42c17e6bc715df12920b7f4aa4bc3c1f0072bb2d169c23c1182b93577b"
+      },
+      {
+        "bytes": 297,
+        "committed_expected": true,
+        "path": "research/artifacts/pre_counselling_feature_schema.json",
+        "role": "generated_asset",
+        "sha256": "d0bafbb15483cdebc228404ee2a41178f64879208f4a9e734756172877fad798"
+      },
+      {
+        "bytes": 4789,
+        "committed_expected": true,
+        "path": "research/artifacts/uncertainty_calibration.json",
+        "role": "generated_asset",
+        "sha256": "745251f9096070f5a30b7b5faaf61c62a98f327dd0033f14d2220cc543301c1d"
+      },
+      {
+        "bytes": 2240,
+        "committed_expected": true,
+        "path": "research/artifacts/model_metadata.json",
+        "role": "generated_asset",
+        "sha256": "e16012e9c654f7041f55454cab43cec7531ff9d468c7cd85587d56f5abec99f7"
+      }
+    ],
+    "git_commit": "ee751d0f236961f612d867864d68abbb1d39d9ab",
+    "git_worktree_dirty": true,
+    "recovery": "Place provenance-verified JoSAA round files under research/data/ and run `.venv/bin/python -m research.pipeline.preprocessing --data-dir research/data`; then rerun the documented research_evaluation.py command.",
+    "schema_version": 2,
+    "source_assets": [
+      {
+        "availability": "local_only",
+        "bytes": 109657862,
+        "committed": false,
+        "license": "unresolved",
+        "path": "research/data/processed/josaa_cleaned.csv",
+        "provenance": "unverified",
+        "redistribution": "not_authorized",
+        "role": "cleaned_observed_cutoffs",
+        "sha256": "6fa3ff7ec8f6823a4ff158ec2b1c49fc79d7f81d23255420803c8ec604045039"
+      }
+    ],
+    "source_commit": "ee751d0f236961f612d867864d68abbb1d39d9ab",
+    "source_date_epoch": 1783093190,
+    "source_worktree_dirty": true,
+    "timestamp_semantics": "Reproducible build timestamp supplied by SOURCE_DATE_EPOCH; it is not the wall-clock execution time.",
+    "timestamp_source": "SOURCE_DATE_EPOCH",
+    "versioned_outputs": [
+      {
+        "bytes": 77862,
+        "committed_expected": true,
+        "path": "research/reports/metrics.json",
+        "role": "research_evidence",
+        "sha256": "3b65afce4a2dbaec2d4a10dd02812a028ba903e783f0cda56c5d6ab533e035f1"
+      },
+      {
+        "bytes": 3349,
+        "committed_expected": true,
+        "path": "research/reports/research_fold_metrics.csv",
+        "role": "research_evidence",
+        "sha256": "adeb21a855dc2103e0210e31bff523bca8a45d5f3ae31a435cce8cf8c5540238"
+      },
+      {
+        "bytes": 1224,
+        "committed_expected": true,
+        "path": "research/reports/research_subgroup_metrics.csv",
+        "role": "research_evidence",
+        "sha256": "729b0fb4532f5fd675170470ffae4797eb587143495b4cd755a9a03c1b55a9ec"
+      },
+      {
+        "bytes": 4233,
+        "committed_expected": true,
+        "path": "research/reports/research_ablation_metrics.csv",
+        "role": "research_evidence",
+        "sha256": "1c0cf639b19b3a677047b503088d85b29108f6ba692c59e8e8b3eeb8894472a4"
+      },
+      {
+        "bytes": 2421,
+        "committed_expected": true,
+        "path": "research/reports/research_in_round_diagnostic.csv",
+        "role": "research_evidence",
+        "sha256": "d73595adfc3c42847e3407710327e03552d1a21216dbf0bef6e2080be8f805ec"
+      },
+      {
+        "bytes": 307,
+        "committed_expected": true,
+        "path": "research/reports/research_model_selection.csv",
+        "role": "research_evidence",
+        "sha256": "034b837b08ae8de5a47aba3e5a58bafb768aab9532497da3b28ea39b3cef6ae1"
+      },
+      {
+        "bytes": 135201,
+        "committed_expected": true,
+        "path": "research/reports/figures/strict_pred_vs_actual.png",
+        "role": "research_evidence",
+        "sha256": "d5d24ef8b44cb8ad2a972b0db134e59551aa45abd400f1b8a22e95b8ee17bebd"
+      },
+      {
+        "bytes": 51902,
+        "committed_expected": true,
+        "path": "research/reports/figures/strict_residual_distribution.png",
+        "role": "research_evidence",
+        "sha256": "3cccd7f6b31d03eadd2c7c0c760cce8c6f898f656cd8e0a894981a3e6c9dee04"
+      },
+      {
+        "bytes": 52646,
+        "committed_expected": true,
+        "path": "research/reports/figures/strict_error_by_year.png",
+        "role": "research_evidence",
+        "sha256": "c73777461439cee4fe261f168d1abc953fe8030dd6a156b944f5cd593fb82d42"
+      },
+      {
+        "bytes": 38730,
+        "committed_expected": true,
+        "path": "research/reports/figures/strict_error_by_institute_type.png",
+        "role": "research_evidence",
+        "sha256": "0c42062d0bf76792e908856a1ced08b686fbb68e68e095d7ba2e7aa96bc718c0"
+      },
+      {
+        "bytes": 44404,
+        "committed_expected": true,
+        "path": "research/reports/figures/strict_interval_coverage.png",
+        "role": "research_evidence",
+        "sha256": "812d3575f44ed50a2f91e1306508e6561fc2d08f63313c821d92ac0e46c2a9e4"
+      },
+      {
+        "bytes": 56586,
+        "committed_expected": true,
+        "path": "research/reports/figures/strict_ablation.png",
+        "role": "research_evidence",
+        "sha256": "47ad5abaf6cf8c8a6406972a637b224280d95fd99c375a8633f8dfda5ec89380"
+      },
+      {
+        "bytes": 499,
+        "committed_expected": true,
+        "path": "research/reports/model_registry.csv",
+        "role": "research_evidence",
+        "sha256": "a8105fbde64e0524b96afb7024aa2f37182eb91c98f33a8b8035e42026d0cef0"
+      }
+    ],
+    "worktree_dirty": true
+  },
+  "manifest_source": "research/reports/artifact_manifest.json",
+  "model_evaluation_source": "research/reports/metrics.json",
+  "model_evaluation_summary": {
+    "data_cutoff_year": 2025,
+    "dataset_license": "unresolved",
+    "dataset_provenance": "unverified",
+    "dataset_sha256": "6fa3ff7ec8f6823a4ff158ec2b1c49fc79d7f81d23255420803c8ec604045039",
+    "feature_mode": "pre_counselling",
+    "final_test_metrics": {
+      "calibration_count": 288592,
+      "feature_mode": "pre_counselling",
+      "forecast_rows": 55441,
+      "forecast_rows_without_observation": 2610,
+      "interval_quantile_global": 4173.0,
+      "mae": 2504.7540080634476,
+      "matched_rows": 52831,
+      "median_absolute_error": 422.0,
+      "model": "naive_last_year",
+      "n": 52831,
+      "observed_rows": 70659,
+      "observed_rows_outside_prior_universe": 17828,
+      "observed_universe_coverage": 0.7476896078348123,
+      "prediction_interval_coverage": 0.9170184172171642,
+      "prediction_interval_mean_width": 8646.750657757755,
+      "r2": 0.7926916787531663,
+      "rmse": 18241.872262122277,
+      "year": 2025
+    },
+    "final_test_residuals_used_for_interval": false,
+    "final_test_year": 2025,
+    "prediction_interval_empirical_coverage": 0.9170184172171642,
+    "primary_model": "naive_last_year",
+    "random_seed": 42,
+    "status": "exploratory_unverified_data_provenance"
+  },
+  "overall_status": "PASSED",
+  "schema_version": 2,
+  "source_commit": "ee751d0f236961f612d867864d68abbb1d39d9ab",
+  "source_worktree_dirty": true,
+  "summary": {
+    "failed": 0,
+    "passed": 17,
+    "skipped": 0
+  },
+  "test_counts": {
+    "failed": 0,
+    "passed": 213,
+    "skipped": 0
+  },
+  "timestamp_utc": "2026-07-11T10:07:39.069050+00:00",
+  "verification_commit": "ee751d0f236961f612d867864d68abbb1d39d9ab",
+  "verification_worktree_dirty": true,
+  "worktree_dirty": true
+}

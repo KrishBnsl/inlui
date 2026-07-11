@@ -1,0 +1,2 @@
+Model_ID,Type,Target,Data_Cutoff,Prediction_Year,Selection_Metric,Validation_Mean_MAE,Final_Test_Year,Final_Test_MAE,Final_Test_RMSE,Final_Test_R2,Feature_Mode,Evidence_Status,Deployment_Status
+pre-counselling-last-observation-cutoff2025-seed42-853816b3481e,Deterministic baseline,closing_rank,2025,2026,pre-final rolling-origin mean MAE,2535.456207,2025,2504.7540080634476,18241.872262122277,0.7926916787531663,pre_counselling,exploratory_unverified_data_provenance,generated_local_assets_required

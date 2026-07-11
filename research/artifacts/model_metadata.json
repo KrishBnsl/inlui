@@ -1,0 +1,68 @@
+{
+  "artifact_type": "full_sklearn_estimator",
+  "artifacts": {
+    "inference_universe.csv": {
+      "bytes": 14540609,
+      "rows": 70659,
+      "sha256": "d9645f42c17e6bc715df12920b7f4aa4bc3c1f0072bb2d169c23c1182b93577b"
+    },
+    "pre_counselling_feature_schema.json": {
+      "bytes": 297,
+      "sha256": "d0bafbb15483cdebc228404ee2a41178f64879208f4a9e734756172877fad798"
+    },
+    "pre_counselling_model.joblib": {
+      "bytes": 336,
+      "sha256": "853816b3481e3d618e1530499101d8b995e742c428e15c5f2c48594a0856da24"
+    },
+    "uncertainty_calibration.json": {
+      "bytes": 4789,
+      "sha256": "745251f9096070f5a30b7b5faaf61c62a98f327dd0033f14d2220cc543301c1d"
+    }
+  },
+  "data_cutoff_year": 2025,
+  "dataset_sha256": "6fa3ff7ec8f6823a4ff158ec2b1c49fc79d7f81d23255420803c8ec604045039",
+  "decision_support_disclaimer": "Decision support only; not an admission guarantee.",
+  "environment": {
+    "joblib": "1.5.0",
+    "numpy": "1.26.4",
+    "pandas": "2.2.3",
+    "platform": "Linux-5.15.167.4-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "scikit_learn": "1.6.1"
+  },
+  "feature_mode": "pre_counselling",
+  "features": [
+    "last_closing_rank"
+  ],
+  "generated_at_utc": "2026-07-03T15:39:50Z",
+  "generated_from_commit": "ee751d0f236961f612d867864d68abbb1d39d9ab",
+  "git_commit": "ee751d0f236961f612d867864d68abbb1d39d9ab",
+  "git_worktree_dirty": true,
+  "model_family": "LastObservationRegressor",
+  "model_version": "pre-counselling-last-observation-cutoff2025-seed42-853816b3481e",
+  "prediction_year": 2026,
+  "provenance_status": "unverified_local_dataset",
+  "schema_version": 1,
+  "seed": 42,
+  "selection_metric": "mean_mae_across_pre_final_rolling_origins",
+  "selection_used_final_test": false,
+  "snapshot_year": 2025,
+  "source_commit": "ee751d0f236961f612d867864d68abbb1d39d9ab",
+  "source_date_epoch": 1783093190,
+  "source_worktree_dirty": true,
+  "timestamp_semantics": "Reproducible build timestamp supplied by SOURCE_DATE_EPOCH; it is not the wall-clock execution time.",
+  "timestamp_source": "SOURCE_DATE_EPOCH",
+  "training_years": [
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "worktree_dirty": true
+}

@@ -1,0 +1,6 @@
+{
+  "evidence_status": "SUPERSEDED_INVALID_METHODOLOGY",
+  "reason": "The legacy experiment used same-season opening-rank features and final-test residual uncertainty.",
+  "replacement": "research/reports/metrics.json",
+  "reproduction_instructions": "docs/TECHNICAL_REPORT.md#reproducibility"
+}

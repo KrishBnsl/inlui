@@ -1,0 +1,12 @@
+# Unified local verification environment. Runtime images install only their
+# service-specific requirement files.
+-e ./packages/josaa-core
+-e ./apps/inference-api
+-e ./apps/rag-api
+-r research/pipeline/requirements.txt
+-r apps/inference-api/requirements.txt
+-r apps/rag-api/requirements.txt
+
+# Data-format dependencies used by research/pipeline/preprocessing.py.
+openpyxl==3.1.5
+pyarrow==18.1.0

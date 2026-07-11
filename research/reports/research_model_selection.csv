@@ -1,0 +1,5 @@
+model,validation_origin_count,validation_mean_mae,validation_mean_rmse,validation_mean_median_absolute_error
+naive_last_year,4,2535.456207,14364.82796,487
+hist_gradient_boosting,4,2878.386937,15740.17509,823.4202054
+historical_mean,4,3279.501969,15378.46814,712.5
+ridge,4,6800.96902,15942.75197,4763.584754

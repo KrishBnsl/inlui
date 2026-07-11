@@ -1,0 +1,203 @@
+{
+  "data_cutoff_year": 2025,
+  "figures": [
+    {
+      "bytes": 135201,
+      "committed_expected": true,
+      "path": "research/reports/figures/strict_pred_vs_actual.png",
+      "role": "strict_research_figure",
+      "sha256": "d5d24ef8b44cb8ad2a972b0db134e59551aa45abd400f1b8a22e95b8ee17bebd"
+    },
+    {
+      "bytes": 51902,
+      "committed_expected": true,
+      "path": "research/reports/figures/strict_residual_distribution.png",
+      "role": "strict_research_figure",
+      "sha256": "3cccd7f6b31d03eadd2c7c0c760cce8c6f898f656cd8e0a894981a3e6c9dee04"
+    },
+    {
+      "bytes": 52646,
+      "committed_expected": true,
+      "path": "research/reports/figures/strict_error_by_year.png",
+      "role": "strict_research_figure",
+      "sha256": "c73777461439cee4fe261f168d1abc953fe8030dd6a156b944f5cd593fb82d42"
+    },
+    {
+      "bytes": 38730,
+      "committed_expected": true,
+      "path": "research/reports/figures/strict_error_by_institute_type.png",
+      "role": "strict_research_figure",
+      "sha256": "0c42062d0bf76792e908856a1ced08b686fbb68e68e095d7ba2e7aa96bc718c0"
+    },
+    {
+      "bytes": 44404,
+      "committed_expected": true,
+      "path": "research/reports/figures/strict_interval_coverage.png",
+      "role": "strict_research_figure",
+      "sha256": "812d3575f44ed50a2f91e1306508e6561fc2d08f63313c821d92ac0e46c2a9e4"
+    },
+    {
+      "bytes": 56586,
+      "committed_expected": true,
+      "path": "research/reports/figures/strict_ablation.png",
+      "role": "strict_research_figure",
+      "sha256": "47ad5abaf6cf8c8a6406972a637b224280d95fd99c375a8633f8dfda5ec89380"
+    }
+  ],
+  "fresh_clone_status": "blocked_pending_provenance_verified_source_data",
+  "generated_at_utc": "2026-07-03T15:39:50Z",
+  "generated_from_commit": "ee751d0f236961f612d867864d68abbb1d39d9ab",
+  "generated_serving_artifacts": [
+    {
+      "bytes": 336,
+      "committed_expected": false,
+      "path": "research/artifacts/pre_counselling_model.joblib",
+      "role": "generated_asset",
+      "sha256": "853816b3481e3d618e1530499101d8b995e742c428e15c5f2c48594a0856da24"
+    },
+    {
+      "bytes": 14540609,
+      "committed_expected": false,
+      "path": "research/artifacts/inference_universe.csv",
+      "role": "generated_asset",
+      "sha256": "d9645f42c17e6bc715df12920b7f4aa4bc3c1f0072bb2d169c23c1182b93577b"
+    },
+    {
+      "bytes": 297,
+      "committed_expected": true,
+      "path": "research/artifacts/pre_counselling_feature_schema.json",
+      "role": "generated_asset",
+      "sha256": "d0bafbb15483cdebc228404ee2a41178f64879208f4a9e734756172877fad798"
+    },
+    {
+      "bytes": 4789,
+      "committed_expected": true,
+      "path": "research/artifacts/uncertainty_calibration.json",
+      "role": "generated_asset",
+      "sha256": "745251f9096070f5a30b7b5faaf61c62a98f327dd0033f14d2220cc543301c1d"
+    },
+    {
+      "bytes": 2240,
+      "committed_expected": true,
+      "path": "research/artifacts/model_metadata.json",
+      "role": "generated_asset",
+      "sha256": "e16012e9c654f7041f55454cab43cec7531ff9d468c7cd85587d56f5abec99f7"
+    }
+  ],
+  "git_commit": "ee751d0f236961f612d867864d68abbb1d39d9ab",
+  "git_worktree_dirty": true,
+  "recovery": "Place provenance-verified JoSAA round files under research/data/ and run `.venv/bin/python -m research.pipeline.preprocessing --data-dir research/data`; then rerun the documented research_evaluation.py command.",
+  "schema_version": 2,
+  "source_assets": [
+    {
+      "availability": "local_only",
+      "bytes": 109657862,
+      "committed": false,
+      "license": "unresolved",
+      "path": "research/data/processed/josaa_cleaned.csv",
+      "provenance": "unverified",
+      "redistribution": "not_authorized",
+      "role": "cleaned_observed_cutoffs",
+      "sha256": "6fa3ff7ec8f6823a4ff158ec2b1c49fc79d7f81d23255420803c8ec604045039"
+    }
+  ],
+  "source_commit": "ee751d0f236961f612d867864d68abbb1d39d9ab",
+  "source_date_epoch": 1783093190,
+  "source_worktree_dirty": true,
+  "timestamp_semantics": "Reproducible build timestamp supplied by SOURCE_DATE_EPOCH; it is not the wall-clock execution time.",
+  "timestamp_source": "SOURCE_DATE_EPOCH",
+  "versioned_outputs": [
+    {
+      "bytes": 77862,
+      "committed_expected": true,
+      "path": "research/reports/metrics.json",
+      "role": "research_evidence",
+      "sha256": "3b65afce4a2dbaec2d4a10dd02812a028ba903e783f0cda56c5d6ab533e035f1"
+    },
+    {
+      "bytes": 3349,
+      "committed_expected": true,
+      "path": "research/reports/research_fold_metrics.csv",
+      "role": "research_evidence",
+      "sha256": "adeb21a855dc2103e0210e31bff523bca8a45d5f3ae31a435cce8cf8c5540238"
+    },
+    {
+      "bytes": 1224,
+      "committed_expected": true,
+      "path": "research/reports/research_subgroup_metrics.csv",
+      "role": "research_evidence",
+      "sha256": "729b0fb4532f5fd675170470ffae4797eb587143495b4cd755a9a03c1b55a9ec"
+    },
+    {
+      "bytes": 4233,
+      "committed_expected": true,
+      "path": "research/reports/research_ablation_metrics.csv",
+      "role": "research_evidence",
+      "sha256": "1c0cf639b19b3a677047b503088d85b29108f6ba692c59e8e8b3eeb8894472a4"
+    },
+    {
+      "bytes": 2421,
+      "committed_expected": true,
+      "path": "research/reports/research_in_round_diagnostic.csv",
+      "role": "research_evidence",
+      "sha256": "d73595adfc3c42847e3407710327e03552d1a21216dbf0bef6e2080be8f805ec"
+    },
+    {
+      "bytes": 307,
+      "committed_expected": true,
+      "path": "research/reports/research_model_selection.csv",
+      "role": "research_evidence",
+      "sha256": "034b837b08ae8de5a47aba3e5a58bafb768aab9532497da3b28ea39b3cef6ae1"
+    },
+    {
+      "bytes": 135201,
+      "committed_expected": true,
+      "path": "research/reports/figures/strict_pred_vs_actual.png",
+      "role": "research_evidence",
+      "sha256": "d5d24ef8b44cb8ad2a972b0db134e59551aa45abd400f1b8a22e95b8ee17bebd"
+    },
+    {
+      "bytes": 51902,
+      "committed_expected": true,
+      "path": "research/reports/figures/strict_residual_distribution.png",
+      "role": "research_evidence",
+      "sha256": "3cccd7f6b31d03eadd2c7c0c760cce8c6f898f656cd8e0a894981a3e6c9dee04"
+    },
+    {
+      "bytes": 52646,
+      "committed_expected": true,
+      "path": "research/reports/figures/strict_error_by_year.png",
+      "role": "research_evidence",
+      "sha256": "c73777461439cee4fe261f168d1abc953fe8030dd6a156b944f5cd593fb82d42"
+    },
+    {
+      "bytes": 38730,
+      "committed_expected": true,
+      "path": "research/reports/figures/strict_error_by_institute_type.png",
+      "role": "research_evidence",
+      "sha256": "0c42062d0bf76792e908856a1ced08b686fbb68e68e095d7ba2e7aa96bc718c0"
+    },
+    {
+      "bytes": 44404,
+      "committed_expected": true,
+      "path": "research/reports/figures/strict_interval_coverage.png",
+      "role": "research_evidence",
+      "sha256": "812d3575f44ed50a2f91e1306508e6561fc2d08f63313c821d92ac0e46c2a9e4"
+    },
+    {
+      "bytes": 56586,
+      "committed_expected": true,
+      "path": "research/reports/figures/strict_ablation.png",
+      "role": "research_evidence",
+      "sha256": "47ad5abaf6cf8c8a6406972a637b224280d95fd99c375a8633f8dfda5ec89380"
+    },
+    {
+      "bytes": 499,
+      "committed_expected": true,
+      "path": "research/reports/model_registry.csv",
+      "role": "research_evidence",
+      "sha256": "a8105fbde64e0524b96afb7024aa2f37182eb91c98f33a8b8035e42026d0cef0"
+    }
+  ],
+  "worktree_dirty": true
+}

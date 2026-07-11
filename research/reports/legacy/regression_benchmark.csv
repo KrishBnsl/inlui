@@ -1,0 +1,2 @@
+evidence_status,replacement,reason
+INVALIDATED,research/reports/metrics.json,"Legacy benchmark used target-season opening-rank features and is not a pre-counselling forecast. Numeric rows were removed to prevent claim reuse."

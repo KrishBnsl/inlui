@@ -1,0 +1,16 @@
+# Minimal environment for the strict research evaluator, canonical figures,
+# real-API case-study smoke call, and focused tests. Kept separate from
+# requirements-legacy.txt so CI does not install XGBoost, LightGBM, SHAP, or
+# notebook dependencies.
+numpy==1.26.4
+pandas==2.2.3
+scikit-learn==1.6.1
+joblib==1.5.0
+matplotlib==3.10.3
+fastapi==0.115.12
+httpx==0.28.1
+pydantic==2.11.4
+pydantic-settings==2.9.1
+python-dotenv==1.1.0
+pytest==8.3.5
+ruff==0.15.21
