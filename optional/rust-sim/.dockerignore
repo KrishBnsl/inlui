@@ -1,0 +1,8 @@
+.git
+.env
+.env.*
+!.env.example
+target
+**/*.rs.bk
+merged_jee_cutoff_2018_2025.csv
+*.log

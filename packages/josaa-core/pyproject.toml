@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "seatcraft-josaa-core"
+version = "0.1.0"
+description = "Shared JoSAA feature contracts and research helpers for SeatCraft."
+requires-python = ">=3.12"
+dependencies = [
+  "numpy==1.26.4",
+  "pandas==2.2.3",
+  "scikit-learn==1.6.1",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
