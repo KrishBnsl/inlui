@@ -191,6 +191,17 @@ python -m pytest apps/rag-api/tests -q
 python scripts/verify_readme.py
 ```
 
+From a tracked-files-only clone, the provenance-blocked serving bundle is
+absent by design. Run the asset-independent inference contract with:
+
+```bash
+python -m pytest apps/inference-api/tests -q -m "not local_assets"
+```
+
+The unfiltered inference command above additionally exercises the ignored
+local serving bundle and therefore fails closed with a recovery command when
+those assets are unavailable.
+
 ```bash
 cd apps/web
 npm test

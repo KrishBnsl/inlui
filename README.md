@@ -2,7 +2,7 @@
 
 ## Uncertainty-Aware Temporal Forecasting and Retrieval-Augmented Decision Support for JoSAA Counselling
 
-> **Ongoing undergraduate research prototype.** SeatCraft is a functioning decision-support system and a reproducible, leakage-aware ML study. It is not a published paper, an official JoSAA service, or an admission guarantee.
+> **Ongoing undergraduate research prototype.** SeatCraft is a functioning decision-support system and a leakage-aware ML study with hash-bound evidence. The complete result is not reproducible from a clean clone while source-data provenance remains unresolved. It is not a published paper, an official JoSAA service, or an admission guarantee.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -183,6 +183,12 @@ The tree above reflects current paths; it does not document planned directories.
 
 The repository's MIT license covers its software; it does not grant rights to
 the provenance-unverified cutoff datasets or collaborator fixtures.
+
+Deleted legacy dataset, row-level output, and model blobs remain reachable in
+Git history even though they are absent from current `RAG` HEAD and are not
+runtime inputs. Removing them requires a separately authorized, coordinated
+history rewrite; the current license does not establish redistribution rights
+for those blobs.
 
 The preprocessing code parses ranks, normalizes category/quota/gender/PwD labels, derives institute and programme metadata, drops duplicate natural keys, exports normalization mappings, and retains source filename/row trace fields. The
 strict evaluator independently rejects missing required columns, null targets, and duplicate year/outcome identities.
@@ -400,6 +406,14 @@ python scripts/verify_readme.py
 
 The asset check fails closed on a clean clone until provenance-verified source data are supplied. No automatic downloader is provided.
 
+The tracked-only Python and frontend checks remain runnable. In particular,
+the clean-clone inference contract suite excludes only tests that require the
+blocked local serving bundle:
+
+```bash
+python -m pytest apps/inference-api/tests -q -m "not local_assets"
+```
+
 </details>
 
 <details>
@@ -457,13 +471,18 @@ Never overwrite an existing `.env`, print secrets, or commit environment files.
 
 ## Testing and verification
 
-Status is reported only for commands executed against the final worktree. The machine-readable consolidated record is [`research/reports/verification/verification_report.json`](research/reports/verification/verification_report.json).
+Status is reported only for commands executed against the stated verification
+commit. The machine-readable core-suite record is
+[`research/reports/verification/verification_report.json`](research/reports/verification/verification_report.json).
+The real-stack browser row is a separate publication check because it requires
+running local services; the report records the mocked browser suite and records
+live Gemini only when the opt-in verifier is enabled.
 
 | Layer               | What is tested                                          | Command                                                                 | Current status       |
 | ------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------- | -------------------- |
-| Feature engineering | Past-only statistics/frequencies and target frames      | `python -m pytest research/pipeline/tests -q`                           | PASSED (29 tests)    |
-| Leakage guards      | Forbidden features, final-test isolation, OOF intervals | same research suite                                                     | PASSED (29 tests)    |
-| Model evidence      | Selection, metrics, hashes, figures, case-study payload | same research suite                                                     | PASSED (29 tests)    |
+| Feature engineering | Past-only statistics/frequencies and target frames      | `python -m pytest research/pipeline/tests -q`                           | PASSED (30 tests)    |
+| Leakage guards      | Forbidden features, final-test isolation, OOF intervals | same research suite                                                     | PASSED (30 tests)    |
+| Model evidence      | Selection, metrics, hashes, figures, case-study payload | same research suite                                                     | PASSED (30 tests)    |
 | Inference API       | Artifacts, routes, validation, rank routing, buckets    | `python -m pytest apps/inference-api/tests -q`                          | PASSED (135 tests)   |
 | RAG pipeline        | Validation, extraction, retrieval, prompt boundaries    | `python -m pytest apps/rag-api/tests -q`                                | PASSED (27 tests)    |
 | Gemini integration  | Dependency-injected mocked gateway                      | same RAG suite                                                          | PASSED (27 tests)    |

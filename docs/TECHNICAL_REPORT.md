@@ -114,6 +114,12 @@ unresolved; history also records mock-data modifications. It is excluded from
 all primary research evidence, must not be substituted for the local research
 table, and may be supplied locally only when the user has an authorized source.
 
+Reachable history also contains deleted legacy model and row-level output
+blobs, including a large serialized estimator. Their training provenance and
+redistribution basis are unresolved. Current runtime code does not load them;
+removing them from already published history requires a separately authorized,
+coordinated history rewrite.
+
 The repository's MIT license covers the software source; it does not establish
 reuse or redistribution rights for either provenance-unverified cutoff table.
 
