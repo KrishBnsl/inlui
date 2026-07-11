@@ -10,7 +10,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "npm run test:unit",
-    "test:unit": "node --test --experimental-strip-types src/lib/*.test.ts",
+    "test:unit": "tsx --test src/lib/*.test.ts",
     "pretest:e2e": "node scripts/clean-next-cache.mjs",
     "test:e2e": "playwright test",
     "test:e2e:full-stack": "playwright test --config=playwright.full-stack.config.ts"
@@ -32,6 +32,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
     "tailwindcss": "^4",
+    "tsx": "4.23.0",
     "typescript": "^5"
   },
   "overrides": {
