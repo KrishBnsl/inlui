@@ -217,10 +217,10 @@ The canonical experiment identifier is
 `seatcraft-strict-pre-counselling-2021-2025-seed42-1c009aa9f98bbf23`; the
 dataset version is `local-unverified-cutoff-2025-6fa3ff7ec8f6`, feature mode is
 `pre_counselling`, and the recorded Git state is commit
-`ee751d0f236961f612d867864d68abbb1d39d9ab` with a dirty worktree. Because the
-experiment code is uncommitted, `metrics.json` additionally records SHA-256
-hashes for the evaluator, feature policy, feature builder, baseline, and
-registry source files.
+`6bdcac995ebab6c05bb88f7c31b4f00abd767d41` with a clean worktree. The generated
+evidence records this non-circular source snapshot through `source_commit` and
+`generated_from_commit`, plus SHA-256 hashes for the evaluator, feature policy,
+feature builder, baseline, registry source files, and every versioned output.
 
 The model is selected before the 2025 comparison is inspected. The target-year
 programme universe is not observed in advance. In 2025, the forecast frame has
@@ -272,8 +272,8 @@ universe has 70,659 rows and contains no observed 2026 opening or closing ranks.
 | `pre_counselling_model.joblib` | 336 | `853816b3481e3d618e1530499101d8b995e742c428e15c5f2c48594a0856da24` | no |
 | `inference_universe.csv` | 14,540,609 | `d9645f42c17e6bc715df12920b7f4aa4bc3c1f0072bb2d169c23c1182b93577b` | no |
 | `pre_counselling_feature_schema.json` | 297 | `d0bafbb15483cdebc228404ee2a41178f64879208f4a9e734756172877fad798` | yes |
-| `uncertainty_calibration.json` | 4,506 | `ba4cd6fa9898465e24b08d447f7e03a162a8a07c4c05c85ff59aba3eae7dc8ed` | yes |
-| `model_metadata.json` | 2,047 | `3ce97385e74b9b83d9a01a922e03736f78a0d47fea58a8a07226dda17da02a6f` | yes |
+| `uncertainty_calibration.json` | 4,792 | `10ac2c71fd26e727528cea39a1b17c07535f8647d0d131381bb35c85be4fe4d6` | yes |
+| `model_metadata.json` | 2,243 | `883b8e2c0bb3bb7a50d54f2a4f60550196e95cd16ad2231e9f626520fdbbe46b` | yes |
 
 Intended uses are a temporal research baseline, a conservative comparator for
 richer forecasting methods, and cutoff context inside a choice-list
@@ -615,8 +615,8 @@ Never infer completeness from the maximum year in a file. The cutoff and
 prediction year remain explicit because the local source includes partial 2026
 records.
 
-The checked evidence uses the baseline commit timestamp as a reproducible build
-timestamp:
+The checked evidence uses the fixed `SOURCE_DATE_EPOCH` recorded in
+`metrics.json` as its reproducible build timestamp:
 
 ```bash
 SOURCE_DATE_EPOCH=1783093190 \

@@ -15,8 +15,8 @@
       "sha256": "853816b3481e3d618e1530499101d8b995e742c428e15c5f2c48594a0856da24"
     },
     "uncertainty_calibration.json": {
-      "bytes": 4789,
-      "sha256": "745251f9096070f5a30b7b5faaf61c62a98f327dd0033f14d2220cc543301c1d"
+      "bytes": 4792,
+      "sha256": "10ac2c71fd26e727528cea39a1b17c07535f8647d0d131381bb35c85be4fe4d6"
     }
   },
   "data_cutoff_year": 2025,
@@ -35,9 +35,9 @@
     "last_closing_rank"
   ],
   "generated_at_utc": "2026-07-03T15:39:50Z",
-  "generated_from_commit": "ee751d0f236961f612d867864d68abbb1d39d9ab",
-  "git_commit": "ee751d0f236961f612d867864d68abbb1d39d9ab",
-  "git_worktree_dirty": true,
+  "generated_from_commit": "6bdcac995ebab6c05bb88f7c31b4f00abd767d41",
+  "git_commit": "6bdcac995ebab6c05bb88f7c31b4f00abd767d41",
+  "git_worktree_dirty": false,
   "model_family": "LastObservationRegressor",
   "model_version": "pre-counselling-last-observation-cutoff2025-seed42-853816b3481e",
   "prediction_year": 2026,
@@ -47,9 +47,9 @@
   "selection_metric": "mean_mae_across_pre_final_rolling_origins",
   "selection_used_final_test": false,
   "snapshot_year": 2025,
-  "source_commit": "ee751d0f236961f612d867864d68abbb1d39d9ab",
+  "source_commit": "6bdcac995ebab6c05bb88f7c31b4f00abd767d41",
   "source_date_epoch": 1783093190,
-  "source_worktree_dirty": true,
+  "source_worktree_dirty": false,
   "timestamp_semantics": "Reproducible build timestamp supplied by SOURCE_DATE_EPOCH; it is not the wall-clock execution time.",
   "timestamp_source": "SOURCE_DATE_EPOCH",
   "training_years": [
@@ -64,5 +64,5 @@
     2024,
     2025
   ],
-  "worktree_dirty": true
+  "worktree_dirty": false
 }

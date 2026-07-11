@@ -448,10 +448,10 @@
       "sha256": "805a89ca1fd9475ccbfbb1f0a1618051bf4d44263b90f33938d4409440b99fef"
     },
     {
-      "bytes": 1588,
+      "bytes": 1587,
       "path": "packages/josaa-core/src/josaa_core/baselines.py",
       "role": "experiment_code",
-      "sha256": "3bd2ef72304fdd413c5b022c2f5ad92520ff5643979bd982d4c053d3f626994b"
+      "sha256": "71d034520ea55f64615dd43678f084e537a890f8bebec48f7d8cf8bdb834528a"
     },
     {
       "bytes": 82762,
@@ -1964,9 +1964,9 @@
     }
   ],
   "generated_at_utc": "2026-07-03T15:39:50Z",
-  "generated_from_commit": "ee751d0f236961f612d867864d68abbb1d39d9ab",
-  "git_commit": "ee751d0f236961f612d867864d68abbb1d39d9ab",
-  "git_worktree_dirty": true,
+  "generated_from_commit": "6bdcac995ebab6c05bb88f7c31b4f00abd767d41",
+  "git_commit": "6bdcac995ebab6c05bb88f7c31b4f00abd767d41",
+  "git_worktree_dirty": false,
   "in_round_diagnostic": [
     {
       "comparable_to_primary_pre_counselling": false,
@@ -2301,21 +2301,21 @@
       "sha256": "d0bafbb15483cdebc228404ee2a41178f64879208f4a9e734756172877fad798"
     },
     {
-      "bytes": 4789,
+      "bytes": 4792,
       "path": "research/artifacts/uncertainty_calibration.json",
       "role": "generated_serving_artifact",
-      "sha256": "745251f9096070f5a30b7b5faaf61c62a98f327dd0033f14d2220cc543301c1d"
+      "sha256": "10ac2c71fd26e727528cea39a1b17c07535f8647d0d131381bb35c85be4fe4d6"
     },
     {
-      "bytes": 2240,
+      "bytes": 2243,
       "path": "research/artifacts/model_metadata.json",
       "role": "generated_serving_artifact",
-      "sha256": "e16012e9c654f7041f55454cab43cec7531ff9d468c7cd85587d56f5abec99f7"
+      "sha256": "883b8e2c0bb3bb7a50d54f2a4f60550196e95cd16ad2231e9f626520fdbbe46b"
     }
   ],
-  "source_commit": "ee751d0f236961f612d867864d68abbb1d39d9ab",
+  "source_commit": "6bdcac995ebab6c05bb88f7c31b4f00abd767d41",
   "source_date_epoch": 1783093190,
-  "source_worktree_dirty": true,
+  "source_worktree_dirty": false,
   "status": "exploratory_unverified_data_provenance",
   "subgroup_results": [
     {
@@ -2502,5 +2502,5 @@
     "nominal_coverage": 0.9,
     "residual_model": "naive_last_year"
   },
-  "worktree_dirty": true
+  "worktree_dirty": false
 }

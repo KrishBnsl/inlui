@@ -468,6 +468,5 @@ primary metrics.
 - Mocked browser/RAG tests prove deterministic application behaviour, while the
   real-stack browser test and opt-in Gemini verifier answer separate integration
   questions.
-- Local success does not prove hosted CI until changes are pushed and the
-  authoritative workflow completes; this working tree is intentionally left
-  uncommitted by the restructuring task.
+- Local success does not prove hosted CI; publication is complete only after
+  the pushed `RAG` commit's authoritative workflow has been monitored.

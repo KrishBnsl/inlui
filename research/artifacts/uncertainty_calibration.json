@@ -11,9 +11,9 @@
   "dataset_sha256": "6fa3ff7ec8f6823a4ff158ec2b1c49fc79d7f81d23255420803c8ec604045039",
   "formal_coverage_guarantee": false,
   "generated_at_utc": "2026-07-03T15:39:50Z",
-  "generated_from_commit": "ee751d0f236961f612d867864d68abbb1d39d9ab",
-  "git_commit": "ee751d0f236961f612d867864d68abbb1d39d9ab",
-  "git_worktree_dirty": true,
+  "generated_from_commit": "6bdcac995ebab6c05bb88f7c31b4f00abd767d41",
+  "git_commit": "6bdcac995ebab6c05bb88f7c31b4f00abd767d41",
+  "git_worktree_dirty": false,
   "global": {
     "abs_residual_quantile": 4073.0,
     "count": 341423
@@ -206,12 +206,12 @@
   "prediction_year": 2026,
   "schema_version": 1,
   "seed": 42,
-  "source_commit": "ee751d0f236961f612d867864d68abbb1d39d9ab",
+  "source_commit": "6bdcac995ebab6c05bb88f7c31b4f00abd767d41",
   "source_date_epoch": 1783093190,
   "source_split": "rolling_origin_oof",
-  "source_worktree_dirty": true,
+  "source_worktree_dirty": false,
   "target_coverage": 0.9,
   "timestamp_semantics": "Reproducible build timestamp supplied by SOURCE_DATE_EPOCH; it is not the wall-clock execution time.",
   "timestamp_source": "SOURCE_DATE_EPOCH",
-  "worktree_dirty": true
+  "worktree_dirty": false
 }
