@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata in this file."
+type: software
+title: "SeatCraft: Uncertainty-Aware Temporal Forecasting and Retrieval-Augmented Decision Support for JoSAA Counselling"
+version: "0.1.0"
+license: MIT
+repository-code: "https://github.com/KrishBnsl/inlui"
+authors:
+  - family-names: Bansal
+    given-names: Krish
+  - family-names: Gupta
+    given-names: Mehul

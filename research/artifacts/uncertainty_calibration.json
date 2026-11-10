@@ -1,0 +1,217 @@
+{
+  "calibration_years": [
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "dataset_sha256": "6fa3ff7ec8f6823a4ff158ec2b1c49fc79d7f81d23255420803c8ec604045039",
+  "formal_coverage_guarantee": false,
+  "generated_at_utc": "2026-07-03T15:39:50Z",
+  "generated_from_commit": "6bdcac995ebab6c05bb88f7c31b4f00abd767d41",
+  "git_commit": "6bdcac995ebab6c05bb88f7c31b4f00abd767d41",
+  "git_worktree_dirty": false,
+  "global": {
+    "abs_residual_quantile": 4073.0,
+    "count": 341423
+  },
+  "groups": [
+    {
+      "abs_residual_quantile": 4943.0,
+      "count": 6703,
+      "institute_type_str": "GFTI",
+      "round": 1
+    },
+    {
+      "abs_residual_quantile": 5802.0,
+      "count": 6406,
+      "institute_type_str": "GFTI",
+      "round": 2
+    },
+    {
+      "abs_residual_quantile": 6144.0,
+      "count": 6309,
+      "institute_type_str": "GFTI",
+      "round": 3
+    },
+    {
+      "abs_residual_quantile": 6365.0,
+      "count": 6274,
+      "institute_type_str": "GFTI",
+      "round": 4
+    },
+    {
+      "abs_residual_quantile": 6560.0,
+      "count": 6257,
+      "institute_type_str": "GFTI",
+      "round": 5
+    },
+    {
+      "abs_residual_quantile": 7903.0,
+      "count": 3772,
+      "institute_type_str": "GFTI",
+      "round": 6
+    },
+    {
+      "abs_residual_quantile": 5284.0,
+      "count": 537,
+      "institute_type_str": "GFTI",
+      "round": 7
+    },
+    {
+      "abs_residual_quantile": 1692.0,
+      "count": 4350,
+      "institute_type_str": "IIIT",
+      "round": 1
+    },
+    {
+      "abs_residual_quantile": 1918.0,
+      "count": 4142,
+      "institute_type_str": "IIIT",
+      "round": 2
+    },
+    {
+      "abs_residual_quantile": 2013.0,
+      "count": 4070,
+      "institute_type_str": "IIIT",
+      "round": 3
+    },
+    {
+      "abs_residual_quantile": 2062.0,
+      "count": 4041,
+      "institute_type_str": "IIIT",
+      "round": 4
+    },
+    {
+      "abs_residual_quantile": 2066.0,
+      "count": 4030,
+      "institute_type_str": "IIIT",
+      "round": 5
+    },
+    {
+      "abs_residual_quantile": 2587.0,
+      "count": 2344,
+      "institute_type_str": "IIIT",
+      "round": 6
+    },
+    {
+      "abs_residual_quantile": 2125.0,
+      "count": 295,
+      "institute_type_str": "IIIT",
+      "round": 7
+    },
+    {
+      "abs_residual_quantile": 971.0,
+      "count": 16505,
+      "institute_type_str": "IIT",
+      "round": 1
+    },
+    {
+      "abs_residual_quantile": 1025.0,
+      "count": 16335,
+      "institute_type_str": "IIT",
+      "round": 2
+    },
+    {
+      "abs_residual_quantile": 1029.0,
+      "count": 16324,
+      "institute_type_str": "IIT",
+      "round": 3
+    },
+    {
+      "abs_residual_quantile": 1027.0,
+      "count": 16325,
+      "institute_type_str": "IIT",
+      "round": 4
+    },
+    {
+      "abs_residual_quantile": 1046.0,
+      "count": 16311,
+      "institute_type_str": "IIT",
+      "round": 5
+    },
+    {
+      "abs_residual_quantile": 1226.0,
+      "count": 10934,
+      "institute_type_str": "IIT",
+      "round": 6
+    },
+    {
+      "abs_residual_quantile": 1744.0,
+      "count": 1627,
+      "institute_type_str": "IIT",
+      "round": 7
+    },
+    {
+      "abs_residual_quantile": 5050.0,
+      "count": 33301,
+      "institute_type_str": "NIT",
+      "round": 1
+    },
+    {
+      "abs_residual_quantile": 5683.0,
+      "count": 32512,
+      "institute_type_str": "NIT",
+      "round": 2
+    },
+    {
+      "abs_residual_quantile": 5893.0,
+      "count": 32256,
+      "institute_type_str": "NIT",
+      "round": 3
+    },
+    {
+      "abs_residual_quantile": 6069.0,
+      "count": 32180,
+      "institute_type_str": "NIT",
+      "round": 4
+    },
+    {
+      "abs_residual_quantile": 6204.0,
+      "count": 32147,
+      "institute_type_str": "NIT",
+      "round": 5
+    },
+    {
+      "abs_residual_quantile": 7395.0,
+      "count": 21645,
+      "institute_type_str": "NIT",
+      "round": 6
+    },
+    {
+      "abs_residual_quantile": 8240.0,
+      "count": 3491,
+      "institute_type_str": "NIT",
+      "round": 7
+    }
+  ],
+  "interval_name": "empirical_prediction_interval",
+  "method": "rolling_origin_oof_absolute_residual",
+  "minimum_group_count_for_serving": 100,
+  "model_training_years": [
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "prediction_year": 2026,
+  "schema_version": 1,
+  "seed": 42,
+  "source_commit": "6bdcac995ebab6c05bb88f7c31b4f00abd767d41",
+  "source_date_epoch": 1783093190,
+  "source_split": "rolling_origin_oof",
+  "source_worktree_dirty": false,
+  "target_coverage": 0.9,
+  "timestamp_semantics": "Reproducible build timestamp supplied by SOURCE_DATE_EPOCH; it is not the wall-clock execution time.",
+  "timestamp_source": "SOURCE_DATE_EPOCH",
+  "worktree_dirty": false
+}

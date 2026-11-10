@@ -1,0 +1,15 @@
+{
+  "availability_mode": "pre_counselling",
+  "features": [
+    "last_closing_rank"
+  ],
+  "forbidden_target_derived_features": [
+    "closing_rank",
+    "closing_rank_ratio_hist",
+    "closing_rank_vs_hist_mean",
+    "log_closing_rank",
+    "rank_spread",
+    "round_delta"
+  ],
+  "version": 3
+}

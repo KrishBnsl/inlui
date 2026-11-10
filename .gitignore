@@ -1,6 +1,4 @@
-# ===========================
-# OS & Editor
-# ===========================
+# OS and editors
 .DS_Store
 Thumbs.db
 *.swp
@@ -10,52 +8,60 @@ Thumbs.db
 .idea/
 *.iml
 
-# ===========================
-# Env & Secrets
-# ===========================
+# Secrets and local configuration
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+*.p12
+*.pfx
 
-# ===========================
-# Node / Next.js  (seatcraft)
-# ===========================
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Node / Next.js
 node_modules/
 .next/
 out/
 build/
 coverage/
+test-results/
+playwright-report/
+*.tsbuildinfo
+.vercel/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
-*.tsbuildinfo
-.vercel
 
-# ===========================
-# Rust / Cargo  (sim_engine)
-# ===========================
+# Research data and generated serving assets
+research/data/
+research/artifacts/
+!research/artifacts/
+research/artifacts/*
+!research/artifacts/model_metadata.json
+!research/artifacts/pre_counselling_feature_schema.json
+!research/artifacts/uncertainty_calibration.json
+
+# Rust / Cargo
 target/
 **/*.rs.bk
 Cargo.lock
-# Uncomment the line above if sim_engine is a library;
-# keep it committed if it contains binaries (which it does).
-# We'll keep it tracked — remove the line below to ignore it.
-!sim_engine/Cargo.lock
+!optional/rust-sim/Cargo.lock
+optional/rust-sim/merged_jee_cutoff_2018_2025.csv
 
-# ===========================
-# Large data files
-# ===========================
-
-# ===========================
-# AI / Agent meta
-# ===========================
+# Local tools and temporary files
 .gemini/
 CLAUDE.md
-
-# ===========================
-# Misc
-# ===========================
-*.pem
 *.log
 tmp/

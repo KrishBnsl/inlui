@@ -1,0 +1,157 @@
+name: verification
+
+on:
+  push:
+    branches: [RAG]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verification-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONUNBUFFERED: "1"
+  GOOGLE_API_KEY: ""
+  RUN_LIVE_GEMINI_TEST: "0"
+
+jobs:
+  python-core:
+    name: Python compile and research guards
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            packages/josaa-core/pyproject.toml
+            research/pipeline/requirements.txt
+      - name: Install research dependencies and shared package
+        run: python -m pip install -r research/pipeline/requirements.txt -e packages/josaa-core
+      - name: Compile Python sources
+        run: python -m compileall -q research packages apps/inference-api apps/rag-api scripts
+      - name: Lint Python sources for undefined names and syntax errors
+        run: python -m ruff check research packages apps/inference-api apps/rag-api scripts --select E9,F63,F7,F82
+      - name: Run research feature and reproducibility tests
+        run: python -m pytest research/pipeline/tests -q
+
+  readme-contract:
+    name: README contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python scripts/verify_readme.py
+
+  inference-tests:
+    name: Inference API tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: apps/inference-api/requirements.txt
+      - run: >-
+          python -m pip install -r apps/inference-api/requirements.txt
+          -e packages/josaa-core -e apps/inference-api
+      - name: Run asset-independent inference tests
+        run: python -m pytest apps/inference-api/tests -q -m "not local_assets"
+      - name: Run local-bundle integration tests when legitimate assets exist
+        run: |
+          if python scripts/check_assets.py; then
+            python -m pytest apps/inference-api/tests -q -m "local_assets"
+          else
+            echo "::warning::Local model integration tests not run: provenance-verified assets are unavailable."
+          fi
+
+  rag-tests:
+    name: RAG mocked-provider tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: apps/rag-api/requirements.txt
+      - run: python -m pip install -r apps/rag-api/requirements.txt -e apps/rag-api
+      - run: python -m pytest apps/rag-api/tests -q
+
+  frontend:
+    name: Frontend lint, unit tests, and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci
+      - run: npm audit --omit=dev
+      - run: npm test
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_ML_URL: http://127.0.0.1:8082
+          NEXT_PUBLIC_RAG_URL: http://127.0.0.1:8081
+
+  playwright:
+    name: Playwright mocked E2E
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+        env:
+          NEXT_PUBLIC_ML_URL: http://127.0.0.1:8082
+          NEXT_PUBLIC_RAG_URL: http://127.0.0.1:8081
+
+  compose-config:
+    name: Default Docker architecture
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Validate Compose syntax
+        run: docker compose config --quiet
+      - name: Assert Rust and PostgreSQL are opt-in
+        run: test "$(docker compose config --services | sort | paste -sd, -)" = "inference-api,rag-api,web"
+      - name: Validate optional Rust profile syntax
+        run: docker compose --profile rust-sim config --quiet
+
+  secret-scan:
+    name: Lightweight secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: python scripts/scan_secrets.py --history
